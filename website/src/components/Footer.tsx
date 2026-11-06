@@ -18,8 +18,8 @@ export function Footer() {
           <nav aria-label="Product links">
             <h2>Product</h2>
             <a href="#/features">Explore features</a>
-            <a href="#/pricing">Pricing & Beta</a>
-            <a href={REGISTER_URL}>Try open beta</a>
+            <a href="#/pricing">Plans & Pricing</a>
+            <a href={REGISTER_URL}>Start for free</a>
           </nav>
           <nav aria-label="About links">
             <h2>SyncTayo</h2>

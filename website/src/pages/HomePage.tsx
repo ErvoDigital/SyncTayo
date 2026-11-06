@@ -65,7 +65,7 @@ export function HomePage() {
         <div className="hero-notes">
           <span>
             <CheckCircle2 size={15} aria-hidden="true" />
-            Open beta (freemium at launch)
+            Free Plan at ₱0 / team (Open Beta)
           </span>
           <span>
             <CalendarRange size={15} aria-hidden="true" />

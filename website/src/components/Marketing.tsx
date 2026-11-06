@@ -84,12 +84,12 @@ export function StartSection() {
           <p className="eyebrow">Make room for what matters</p>
           <h2>Bring your teams into SyncTayo.</h2>
           <p>
-            Experience the open beta today with all features and Lofty, our AI
-            assistant. SyncTayo will feature a freemium model upon official release.
+            Start with our Free Plan at ₱0 / team during Open Beta, or unlock
+            Starter and Pro team plans as your organization grows.
           </p>
         </div>
         <GetStartedLink className="shrink-0">
-          Try the open beta
+          Start for free
         </GetStartedLink>
       </div>
     </section>

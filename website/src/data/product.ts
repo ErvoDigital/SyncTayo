@@ -38,9 +38,9 @@ export const PAGES: {
   {
     id: "pricing",
     label: "Pricing",
-    title: "SyncTayo pricing — Open Beta & Upcoming Freemium Release",
+    title: "SyncTayo pricing — Freemium & Team Subscription Plans",
     description:
-      "SyncTayo is currently in open beta with all workspace features unlocked. Experience the platform now ahead of our freemium official release.",
+      "Flexible per-team pricing starting at ₱0 during Open Beta, with Starter (₱599/team/mo) for growing teams and Pro (₱1,199/team/mo) for larger organizations and SMEs.",
   },
   {
     id: "about",
@@ -248,9 +248,9 @@ export const FAQS = [
       "SyncTayo is a student-developed academic project currently in beta testing. The business concept is being developed for educational purposes.",
   },
   {
-    question: "Is SyncTayo free to use?",
+    question: "How does SyncTayo’s freemium pricing work?",
     answer:
-      "Yes. SyncTayo is currently in open beta with all workspace features unlocked. When officially released, SyncTayo will feature a freemium model with a generous free tier alongside premium plans for advanced team and organizational needs.",
+      "SyncTayo offers a Free Plan at ₱0 / team (Free during Open Beta) with private workspace chat, file sharing, basic task boards, My Plan, and basic Kas AI interaction. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for Shared Team Availability, Auto-Schedule Best Slot, multi-version file storage, and live Yjs docs, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited Kas AI voice/text with batch task-difficulty scoring, and custom Role-Based Access Control.",
   },
   {
     question: "What does “Try for free” open?",
