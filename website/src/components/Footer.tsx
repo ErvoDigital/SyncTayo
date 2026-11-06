@@ -28,11 +28,6 @@ export function Footer() {
             <a href={REGISTER_URL}>Create your account</a>
           </nav>
         </div>
-        <div className="footer-notice">
-          <p>
-            <strong>Academic Project Notice:</strong> SyncTayo is a student-developed academic project currently in beta testing. The business concept is being developed for educational purposes.
-          </p>
-        </div>
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} SyncTayo. All rights reserved.</p>
           <p>Built for life across teams.</p>

@@ -31,7 +31,7 @@ export function HomePage() {
       <section className="hero container">
         <p className="hero-pill">
           <span />
-          Open Beta · One home for all your teams
+          One home for all your teams
         </p>
         <h1>
           All your teams.
@@ -39,13 +39,13 @@ export function HomePage() {
           <span className="text-brand">One clear plan.</span>
         </h1>
         <p className="hero-description">
-          School, work, organizations, and community. Currently in open beta,
-          SyncTayo brings your tasks, calendars, conversations, meetings, documents,
-          files, and Lofty, our AI assistant, together so you can see what
-          matters across every team.
+          School, work, organizations, and community. SyncTayo brings your
+          tasks, calendars, conversations, meetings, documents, files, and
+          Lofty, our AI assistant, together so you can see what matters across
+          every team.
         </p>
         <div className="hero-actions">
-          <GetStartedLink>Try open beta</GetStartedLink>
+          <GetStartedLink>Start for free</GetStartedLink>
           <button
             className="button button-secondary"
             onClick={() =>
@@ -65,7 +65,7 @@ export function HomePage() {
         <div className="hero-notes">
           <span>
             <CheckCircle2 size={15} aria-hidden="true" />
-            Free Plan at ₱0 / team (Open Beta)
+            Free Plan at ₱0 / team
           </span>
           <span>
             <CalendarRange size={15} aria-hidden="true" />

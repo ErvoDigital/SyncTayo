@@ -35,7 +35,7 @@ export function FeaturesPage() {
   return (
     <>
       <section className="container page-hero">
-        <p className="eyebrow">The SyncTayo service · Open Beta</p>
+        <p className="eyebrow">The SyncTayo service</p>
         <h1>
           Everything your teams need.
           <br />

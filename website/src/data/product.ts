@@ -13,7 +13,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
-import type { PageType } from "../types";
+import type { PageType, PlanId } from "../types";
 
 export const PAGES: {
   id: PageType;
@@ -40,7 +40,7 @@ export const PAGES: {
     label: "Pricing",
     title: "SyncTayo pricing — Freemium & Team Subscription Plans",
     description:
-      "Flexible per-team pricing starting at ₱0 during Open Beta, with Starter (₱599/team/mo) for growing teams and Pro (₱1,199/team/mo) for larger organizations and SMEs.",
+      "Flexible per-team pricing starting at ₱0 / team, with Starter (₱599/team/mo) for growing teams and Pro (₱1,199/team/mo) for larger organizations and SMEs.",
   },
   {
     id: "about",
@@ -48,6 +48,105 @@ export const PAGES: {
     title: "About SyncTayo — Built for life across teams",
     description:
       "SyncTayo helps people coordinate school, work, organizations, and community commitments in one place, with a personal view across independent teams.",
+  },
+];
+
+export const CHECKOUT_PAGE_META = {
+  id: "checkout" as PageType,
+  label: "Subscribe",
+  title: "SyncTayo Checkout — Complete Your Team Subscription",
+  description:
+    "Set up your SyncTayo team subscription and complete checkout with GCash, Maya, Credit/Debit Card, or QR Ph bank transfer.",
+};
+
+export const PRICING_PLANS: {
+  id: PlanId;
+  name: string;
+  badge: string;
+  Icon: typeof Layers;
+  monthlyAmount: number;
+  yearlyAmount: number;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  periodLabel: string;
+  yearlyPeriodLabel?: string;
+  subPriceLabel: string;
+  description: string;
+  ctaLabel: string;
+  popular: boolean;
+  inclusionsHeader: string;
+  inclusions: string[];
+}[] = [
+  {
+    id: "free",
+    name: "Free Plan",
+    badge: "Free Forever",
+    Icon: Layers,
+    monthlyAmount: 0,
+    yearlyAmount: 0,
+    monthlyPrice: "₱0",
+    yearlyPrice: "₱0",
+    periodLabel: "/ team",
+    subPriceLabel: "₱0 / team — Free Forever",
+    description:
+      "Essential multi-workspace coordination, chat, tasks, and personal cross-team planning for everyday teams.",
+    ctaLabel: "Start for Free",
+    popular: false,
+    inclusionsHeader: "Inclusions:",
+    inclusions: [
+      "Complete private team workspace chat and file sharing",
+      "Basic team task board and calendar view",
+      "Personal My Plan and Smart Priority cross-team view",
+      "Starter cloud storage quota and basic Kas AI assistant interaction",
+    ],
+  },
+  {
+    id: "starter",
+    name: "Starter Plan",
+    badge: "Most Popular",
+    Icon: Sparkles,
+    monthlyAmount: 599,
+    yearlyAmount: 5990,
+    monthlyPrice: "₱599",
+    yearlyPrice: "₱5,990",
+    periodLabel: "/ team / month",
+    yearlyPeriodLabel: "/ team / year",
+    subPriceLabel: "₱599 / team / month (or ₱5,990 / year — save 2 months)",
+    description:
+      "Built for growing organizations and active project teams that need shared availability, live docs, and versioned storage.",
+    ctaLabel: "Choose Starter",
+    popular: true,
+    inclusionsHeader: "Everything in Free, plus:",
+    inclusions: [
+      "Shared Team Availability Grid and Auto-Schedule Best Slot",
+      "Multi-version file storage (V1, V2+) with non-destructive restore and Trash recovery",
+      "Live collaborative Yjs document editing and 1-click Markdown (.md) export",
+      "Kas AI meeting summaries and leader-reviewed action items",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro Plan",
+    badge: "For Larger Orgs & SMEs",
+    Icon: ShieldCheck,
+    monthlyAmount: 1199,
+    yearlyAmount: 11990,
+    monthlyPrice: "₱1,199",
+    yearlyPrice: "₱11,990",
+    periodLabel: "/ team / month",
+    yearlyPeriodLabel: "/ team / year",
+    subPriceLabel: "₱1,199 / team / month (or ₱11,990 / year — save 2 months)",
+    description:
+      "Full-scale governance, custom RBAC permissions, unlimited Kas AI voice & difficulty scoring, and expanded cloud storage.",
+    ctaLabel: "Upgrade to Pro",
+    popular: false,
+    inclusionsHeader: "Everything in Starter, plus:",
+    inclusions: [
+      "Expanded cloud storage quotas and priority asset processing",
+      "Unlimited Kas AI voice/text interactions and advanced batch task-difficulty scoring (assess_task_difficulty)",
+      "Advanced Custom Role-Based Access Control (tasks.manage, storage.manage, roles.manage)",
+      "Priority multi-team administrative governance and support",
+    ],
   },
 ];
 
@@ -243,19 +342,14 @@ export const FAQS = [
       "SyncTayo is for people who belong to more than one team: students, professionals, project groups, organizations, and community groups. Each team gets its own workspace, while you get a personal view across your memberships.",
   },
   {
-    question: "What is SyncTayo’s current project status?",
-    answer:
-      "SyncTayo is a student-developed academic project currently in beta testing. The business concept is being developed for educational purposes.",
-  },
-  {
     question: "How does SyncTayo’s freemium pricing work?",
     answer:
-      "SyncTayo offers a Free Plan at ₱0 / team (Free during Open Beta) with private workspace chat, file sharing, basic task boards, My Plan, and basic Kas AI interaction. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for Shared Team Availability, Auto-Schedule Best Slot, multi-version file storage, and live Yjs docs, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited Kas AI voice/text with batch task-difficulty scoring, and custom Role-Based Access Control.",
+      "SyncTayo offers a Free Plan at ₱0 / team with private workspace chat, file sharing, basic task boards, My Plan, and basic Kas AI interaction. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for Shared Team Availability, Auto-Schedule Best Slot, multi-version file storage, and live Yjs docs, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited Kas AI voice/text with batch task-difficulty scoring, and custom Role-Based Access Control.",
   },
   {
     question: "What does “Try for free” open?",
     answer:
-      "It opens the SyncTayo registration page to create an account and access the open beta. If you already have an account, use Log in in the navigation bar. SyncTayo verifies sign-in with an emailed code.",
+      "It opens the SyncTayo registration page to create an account and set up your workspace. If you already have an account, use Log in in the navigation bar. SyncTayo verifies sign-in with an emailed code.",
   },
   {
     question: "Do my teams see each other’s work?",

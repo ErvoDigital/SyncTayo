@@ -1,80 +1,8 @@
 import { useState } from "react";
-import { Check, Layers, Sparkles, ShieldCheck } from "lucide-react";
-import {
-  GetStartedLink,
-  SectionHeading,
-  StartSection,
-} from "../components/Marketing";
-
-type BillingCycle = "monthly" | "yearly";
-
-const PRICING_PLANS = [
-  {
-    id: "free",
-    name: "Free Plan",
-    badge: "Free during Open Beta",
-    Icon: Layers,
-    monthlyPrice: "₱0",
-    yearlyPrice: "₱0",
-    periodLabel: "/ team",
-    subPriceLabel: "Free during Open Beta",
-    description:
-      "Essential multi-workspace coordination, chat, tasks, and personal cross-team planning for everyday teams.",
-    ctaLabel: "Start for Free",
-    popular: false,
-    inclusionsHeader: "Inclusions:",
-    inclusions: [
-      "Complete private team workspace chat and file sharing",
-      "Basic team task board and calendar view",
-      "Personal My Plan and Smart Priority cross-team view",
-      "Starter cloud storage quota and basic Kas AI assistant interaction",
-    ],
-  },
-  {
-    id: "starter",
-    name: "Starter Plan",
-    badge: "Most Popular",
-    Icon: Sparkles,
-    monthlyPrice: "₱599",
-    yearlyPrice: "₱5,990",
-    periodLabel: "/ team / month",
-    yearlyPeriodLabel: "/ team / year",
-    subPriceLabel: "₱599 / team / month (or ₱5,990 / year — save 2 months)",
-    description:
-      "Built for growing organizations and active project teams that need shared availability, live docs, and versioned storage.",
-    ctaLabel: "Choose Starter",
-    popular: true,
-    inclusionsHeader: "Everything in Free, plus:",
-    inclusions: [
-      "Shared Team Availability Grid and Auto-Schedule Best Slot",
-      "Multi-version file storage (V1, V2+) with non-destructive restore and Trash recovery",
-      "Live collaborative Yjs document editing and 1-click Markdown (.md) export",
-      "Kas AI meeting summaries and leader-reviewed action items",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    badge: "For Larger Orgs & SMEs",
-    Icon: ShieldCheck,
-    monthlyPrice: "₱1,199",
-    yearlyPrice: "₱11,990",
-    periodLabel: "/ team / month",
-    yearlyPeriodLabel: "/ team / year",
-    subPriceLabel: "₱1,199 / team / month (or ₱11,990 / year — save 2 months)",
-    description:
-      "Full-scale governance, custom RBAC permissions, unlimited Kas AI voice & difficulty scoring, and expanded cloud storage.",
-    ctaLabel: "Upgrade to Pro",
-    popular: false,
-    inclusionsHeader: "Everything in Starter, plus:",
-    inclusions: [
-      "Expanded cloud storage quotas and priority asset processing",
-      "Unlimited Kas AI voice/text interactions and advanced batch task-difficulty scoring (assess_task_difficulty)",
-      "Advanced Custom Role-Based Access Control (tasks.manage, storage.manage, roles.manage)",
-      "Priority multi-team administrative governance and support",
-    ],
-  },
-] as const;
+import { ArrowRight, Check } from "lucide-react";
+import type { BillingCycle } from "../types";
+import { PRICING_PLANS } from "../data/product";
+import { SectionHeading, StartSection } from "../components/Marketing";
 
 export function PricingPage() {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
@@ -90,7 +18,7 @@ export function PricingPage() {
         </h1>
         <p className="hero-description">
           Transparent team-based pricing in Philippine Pesos (₱). Start at ₱0
-          during Open Beta, or unlock advanced scheduling, versioning, live Yjs
+          with our Free Plan, or unlock advanced scheduling, versioning, live Yjs
           documents, and full Kas AI automation for your organization.
         </p>
 
@@ -126,9 +54,10 @@ export function PricingPage() {
             const isYearly = billing === "yearly" && plan.id !== "free";
             const displayedPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
             const displayedPeriod =
-              isYearly && "yearlyPeriodLabel" in plan
+              isYearly && plan.yearlyPeriodLabel
                 ? plan.yearlyPeriodLabel
                 : plan.periodLabel;
+            const checkoutHref = `#/checkout?plan=${plan.id}&billing=${billing}`;
 
             return (
               <article
@@ -157,13 +86,15 @@ export function PricingPage() {
                   <p className="pricing-tier-subprice">{plan.subPriceLabel}</p>
                   <p className="pricing-tier-description">{plan.description}</p>
 
-                  <GetStartedLink
-                    className={
-                      plan.popular ? "w-full" : "button-secondary w-full"
-                    }
+                  <a
+                    href={checkoutHref}
+                    className={`button ${
+                      plan.popular ? "button-primary" : "button-secondary"
+                    } w-full`}
                   >
                     {plan.ctaLabel}
-                  </GetStartedLink>
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </a>
                 </div>
 
                 <div className="pricing-tier-inclusions">
@@ -202,14 +133,14 @@ export function PricingPage() {
           </details>
           <details>
             <summary>
-              Is the Free Plan really ₱0 during Open Beta?
+              What is included in the ₱0 Free Plan?
               <span aria-hidden="true">+</span>
             </summary>
             <p>
-              Yes! The Free Plan is ₱0 / team (Free during Open Beta) and
-              includes complete private team workspace chat, file sharing, basic
-              task boards and calendar views, personal My Plan + Smart Priority,
-              starter cloud storage, and basic Kas AI assistant interaction.
+              The Free Plan is ₱0 / team and includes complete private team
+              workspace chat, file sharing, basic task boards and calendar
+              views, personal My Plan + Smart Priority, starter cloud storage,
+              and basic Kas AI assistant interaction.
             </p>
           </details>
           <details>

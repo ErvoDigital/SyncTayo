@@ -20,7 +20,7 @@ export function AboutPage() {
           collaboration platform built for people balancing school, work,
           organizations, and community in one life.
         </p>
-        <GetStartedLink>Try the open beta</GetStartedLink>
+        <GetStartedLink>Start for free</GetStartedLink>
       </section>
       <section className="container section split-section">
         <div>
@@ -115,13 +115,6 @@ export function AboutPage() {
               <p>{description}</p>
             </article>
           ))}
-        </div>
-      </section>
-      <section className="container section">
-        <div className="about-disclosure">
-          <p>
-            <strong>Project Disclosure:</strong> SyncTayo is a student-developed academic project currently in beta testing. The business concept is being developed for educational purposes.
-          </p>
         </div>
       </section>
       <section className="container section">
