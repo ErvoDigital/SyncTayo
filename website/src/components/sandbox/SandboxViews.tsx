@@ -1545,7 +1545,7 @@ function SettingsView({ workspaceId }: ViewProps) {
           <div className="ls-member-row">
             <span>
               <strong>Free Plan (Current)</strong>
-              <small>₱0 / team · Private chat, basic task board & My Plan</small>
+              <small>₱0 / team · Private chat, team task boards & My Plan</small>
             </span>
             <span className="ls-access-badge">Active</span>
           </div>
@@ -1553,8 +1553,9 @@ function SettingsView({ workspaceId }: ViewProps) {
             <span>
               <strong>Starter Plan · Most Popular</strong>
               <small>
-                ₱599 / team / mo (or ₱5,990 / yr) · Team Availability Grid, V1/V2+
-                storage, Live Yjs Docs & Kas AI summaries
+                ₱599 / team / mo (or ₱5,990 / yr) · Shared team availability,
+                file version history, live collaborative documents & AI
+                summaries
               </small>
             </span>
             <a className="ls-access-badge" href="#/checkout?plan=starter&billing=monthly">
@@ -1565,8 +1566,9 @@ function SettingsView({ workspaceId }: ViewProps) {
             <span>
               <strong>Pro Plan · Larger Orgs & SMEs</strong>
               <small>
-                ₱1,199 / team / mo (or ₱11,990 / yr) · Expanded storage,
-                unlimited Kas AI + difficulty scoring & custom RBAC
+                ₱1,199 / team / mo (or ₱11,990 / yr) · Expanded cloud storage,
+                unlimited AI voice & workload insights, and custom member
+                permissions
               </small>
             </span>
             <a className="ls-access-badge" href="#/checkout?plan=pro&billing=monthly">

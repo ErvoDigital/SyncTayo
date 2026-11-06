@@ -18,8 +18,9 @@ export function PricingPage() {
         </h1>
         <p className="hero-description">
           Transparent team-based pricing in Philippine Pesos (₱). Start at ₱0
-          with our Free Plan, or unlock advanced scheduling, versioning, live Yjs
-          documents, and full Kas AI automation for your organization.
+          with our Free Plan, or unlock shared scheduling, file version history,
+          live collaborative documents, and full AI assistance for your
+          organization.
         </p>
 
         <div
@@ -137,10 +138,10 @@ export function PricingPage() {
               <span aria-hidden="true">+</span>
             </summary>
             <p>
-              The Free Plan is ₱0 / team and includes complete private team
-              workspace chat, file sharing, basic task boards and calendar
-              views, personal My Plan + Smart Priority, starter cloud storage,
-              and basic Kas AI assistant interaction.
+              The Free Plan is ₱0 / team and includes private team workspace
+              chat, file sharing, team task boards and shared calendar views,
+              your personal daily planner (My Plan), standard cloud file
+              storage, and basic AI assistant help.
             </p>
           </details>
           <details>
@@ -149,15 +150,14 @@ export function PricingPage() {
               <span aria-hidden="true">+</span>
             </summary>
             <p>
-              Starter (₱599 / team / month or ₱5,990 / year) is tailored for
-              organizations and active project teams needing the Shared
-              Team Availability Grid, Auto-Schedule Best Slot, multi-version
-              storage (V1, V2+) with Trash recovery, live collaborative Yjs
-              docs, and Kas AI meeting summaries. Pro (₱1,199 / team / month or
-              ₱11,990 / year) adds expanded cloud storage quotas, unlimited Kas
-              AI voice/text with batch task-difficulty scoring
-              (assess_task_difficulty), and custom Role-Based Access Control
-              (tasks.manage, storage.manage, roles.manage).
+              Starter (₱599 / team / month or ₱5,990 / year) is designed for
+              organizations and active project teams needing shared team
+              availability, 1-click automatic meeting scheduling, file version
+              history with trash recovery, live collaborative documents, and AI
+              meeting summaries. Pro (₱1,199 / team / month or ₱11,990 / year)
+              adds expanded cloud storage space, unlimited AI voice and text
+              assistance with task difficulty and workload insights, and custom
+              member roles and editing permissions.
             </p>
           </details>
           <details>

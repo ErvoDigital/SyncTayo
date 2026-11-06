@@ -89,15 +89,15 @@ export const PRICING_PLANS: {
     periodLabel: "/ team",
     subPriceLabel: "₱0 / team — Free Forever",
     description:
-      "Essential multi-workspace coordination, chat, tasks, and personal cross-team planning for everyday teams.",
+      "Essential workspace tools for everyday team communication, task tracking, and personal daily planning.",
     ctaLabel: "Start for Free",
     popular: false,
     inclusionsHeader: "Inclusions:",
     inclusions: [
-      "Complete private team workspace chat and file sharing",
-      "Basic team task board and calendar view",
-      "Personal My Plan and Smart Priority cross-team view",
-      "Starter cloud storage quota and basic Kas AI assistant interaction",
+      "Private team workspace chat and file sharing",
+      "Team task boards and shared calendar view",
+      "Personal daily planner (My Plan) and cross-team priority view",
+      "Standard cloud file storage and basic AI assistant help",
     ],
   },
   {
@@ -113,15 +113,15 @@ export const PRICING_PLANS: {
     yearlyPeriodLabel: "/ team / year",
     subPriceLabel: "₱599 / team / month (or ₱5,990 / year — save 2 months)",
     description:
-      "Built for growing organizations and active project teams that need shared availability, live docs, and versioned storage.",
+      "Built for growing organizations and active project teams that need shared scheduling, live document collaboration, and file history.",
     ctaLabel: "Choose Starter",
     popular: true,
     inclusionsHeader: "Everything in Free, plus:",
     inclusions: [
-      "Shared Team Availability Grid and Auto-Schedule Best Slot",
-      "Multi-version file storage (V1, V2+) with non-destructive restore and Trash recovery",
-      "Live collaborative Yjs document editing and 1-click Markdown (.md) export",
-      "Kas AI meeting summaries and leader-reviewed action items",
+      "Shared team availability view and 1-click automatic meeting scheduling",
+      "File version history with easy restore and trash recovery for deleted items",
+      "Live collaborative document editing and 1-click document download",
+      "AI-generated meeting summaries and action item suggestions",
     ],
   },
   {
@@ -137,15 +137,15 @@ export const PRICING_PLANS: {
     yearlyPeriodLabel: "/ team / year",
     subPriceLabel: "₱1,199 / team / month (or ₱11,990 / year — save 2 months)",
     description:
-      "Full-scale governance, custom RBAC permissions, unlimited Kas AI voice & difficulty scoring, and expanded cloud storage.",
+      "Full team control, custom member permissions, unlimited AI voice and workload insights, and expanded storage for larger organizations.",
     ctaLabel: "Upgrade to Pro",
     popular: false,
     inclusionsHeader: "Everything in Starter, plus:",
     inclusions: [
-      "Expanded cloud storage quotas and priority asset processing",
-      "Unlimited Kas AI voice/text interactions and advanced batch task-difficulty scoring (assess_task_difficulty)",
-      "Advanced Custom Role-Based Access Control (tasks.manage, storage.manage, roles.manage)",
-      "Priority multi-team administrative governance and support",
+      "Expanded cloud storage space and faster file handling",
+      "Unlimited AI voice and text assistance with smart task difficulty and workload insights",
+      "Custom member roles and editing permissions for tasks, files, and team access",
+      "Priority multi-team management and dedicated support",
     ],
   },
 ];
@@ -344,7 +344,7 @@ export const FAQS = [
   {
     question: "How does SyncTayo’s freemium pricing work?",
     answer:
-      "SyncTayo offers a Free Plan at ₱0 / team with private workspace chat, file sharing, basic task boards, My Plan, and basic Kas AI interaction. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for Shared Team Availability, Auto-Schedule Best Slot, multi-version file storage, and live Yjs docs, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited Kas AI voice/text with batch task-difficulty scoring, and custom Role-Based Access Control.",
+      "SyncTayo offers a Free Plan at ₱0 / team with private workspace chat, file sharing, task boards, My Plan, and basic AI assistance. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for shared team availability, 1-click automatic scheduling, file version history with trash recovery, and live collaborative documents, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited AI voice and text assistance with workload insights, and custom member permissions.",
   },
   {
     question: "What does “Try for free” open?",

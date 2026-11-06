@@ -14,13 +14,14 @@ const WORKSPACE_PLANS = [
     period: "/ team",
     yearlyPeriod: "/ team",
     subtext: "₱0 / team — Free Forever",
-    description: "Essential workspace chat, task boards, calendar, and personal My Plan.",
+    description:
+      "Essential workspace tools for everyday team communication, task tracking, and personal daily planning.",
     inclusionsHeader: "Inclusions:",
     inclusions: [
-      "Complete private team workspace chat and file sharing",
-      "Basic team task board and calendar view",
-      "Personal My Plan and Smart Priority cross-team view",
-      "Starter cloud storage quota and basic Kas AI assistant interaction",
+      "Private team workspace chat and file sharing",
+      "Team task boards and shared calendar view",
+      "Personal daily planner (My Plan) and cross-team priority view",
+      "Standard cloud file storage and basic AI assistant help",
     ],
   },
   {
@@ -35,14 +36,15 @@ const WORKSPACE_PLANS = [
     period: "/ team / month",
     yearlyPeriod: "/ team / year",
     subtext: "₱599 / team / month (or ₱5,990 / year)",
-    description: "Shared availability, versioned file storage, live Yjs docs, and Kas AI summaries.",
+    description:
+      "Built for growing organizations and active project teams that need shared scheduling, live document collaboration, and file history.",
     popular: true,
     inclusionsHeader: "Everything in Free, plus:",
     inclusions: [
-      "Shared Team Availability Grid and Auto-Schedule Best Slot",
-      "Multi-version file storage (V1, V2+) with non-destructive restore and Trash recovery",
-      "Live collaborative Yjs document editing and 1-click Markdown (.md) export",
-      "Kas AI meeting summaries and leader-reviewed action items",
+      "Shared team availability view and 1-click automatic meeting scheduling",
+      "File version history with easy restore and trash recovery for deleted items",
+      "Live collaborative document editing and 1-click document download",
+      "AI-generated meeting summaries and action item suggestions",
     ],
   },
   {
@@ -57,13 +59,14 @@ const WORKSPACE_PLANS = [
     period: "/ team / month",
     yearlyPeriod: "/ team / year",
     subtext: "₱1,199 / team / month (or ₱11,990 / year)",
-    description: "Expanded storage, unlimited Kas AI & difficulty scoring, and custom RBAC controls.",
+    description:
+      "Full team control, custom member permissions, unlimited AI voice and workload insights, and expanded storage for larger organizations.",
     inclusionsHeader: "Everything in Starter, plus:",
     inclusions: [
-      "Expanded cloud storage quotas and priority asset processing",
-      "Unlimited Kas AI voice/text interactions and advanced batch task-difficulty scoring (assess_task_difficulty)",
-      "Advanced Custom Role-Based Access Control (tasks.manage, storage.manage, roles.manage)",
-      "Priority multi-team administrative governance and support",
+      "Expanded cloud storage space and faster file handling",
+      "Unlimited AI voice and text assistance with smart task difficulty and workload insights",
+      "Custom member roles and editing permissions for tasks, files, and team access",
+      "Priority multi-team management and dedicated support",
     ],
   },
 ];
@@ -218,7 +221,7 @@ export default function WorkspacePlanCard({ workspace, currentUser, isAdmin }) {
             Upgrade {workspace.name} Plan
           </h2>
           <p className="mt-0.5 text-sm text-ink-500 dark:text-ink-400">
-            Per-team subscription pricing in Philippine Pesos (₱). Unlock Shared Team Availability, multi-version storage, live Yjs docs, and advanced Kas AI tools.
+            Per-team subscription pricing in Philippine Pesos (₱). Unlock shared team availability, file version history, live collaborative documents, and advanced AI tools.
           </p>
         </div>
 
