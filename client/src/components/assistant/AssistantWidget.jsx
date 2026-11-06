@@ -13,6 +13,7 @@ import VoiceOrb from "./VoiceOrb.jsx";
 import useVisualViewport from "../../hooks/useVisualViewport.js";
 import { createAssistantAudio } from "../../utils/assistantAudio.js";
 import { createLiveCaptions } from "../../utils/liveCaptions.js";
+import * as assistantApi from "../../api/assistant.js";
 import { assistantStatus, sendAssistantMessage, confirmAssistantAction, speakAssistantReply, transcribeAssistantAudio, transcribeLiveAudio } from "../../api/assistant.js";
 import { apiErrorMessage } from "../../api/client.js";
 import { humanizePriorityTerms } from "../../lib/priorities.js";
@@ -27,8 +28,56 @@ const SUGGESTIONS = [
 
 let nextId = 0;
 const MAX_RECORDING_MS = 30000;
+const MAX_SAVED_MESSAGES = 40;
 const NO_SPEECH = "I didn't catch that. Tap Ask again or hold M to try again.";
 const ASSISTANT_UNAVAILABLE_MESSAGE = "We're having trouble connecting to the AI service. Please try again in a moment. You can keep using your workspace.";
+
+function storageKeyFor(userId, workspaceId) {
+  if (!userId) return null;
+  return `synctayo_kas_history_${userId}_${workspaceId || "global"}`;
+}
+
+function loadSavedConversation(userId, workspaceId) {
+  try {
+    const key = storageKeyFor(userId, workspaceId);
+    if (!key || typeof window === "undefined" || !window.localStorage) return [];
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string")
+      .map((item) => {
+        const id = typeof item.id === "number" ? item.id : ++nextId;
+        if (id > nextId) nextId = id;
+        return { ...item, id, streaming: false, failed: false };
+      });
+  } catch {
+    return [];
+  }
+}
+
+function saveConversation(userId, workspaceId, messages) {
+  try {
+    const key = storageKeyFor(userId, workspaceId);
+    if (!key || typeof window === "undefined" || !window.localStorage) return;
+    const persistable = messages
+      .filter((item) => !item.streaming && !item.failed)
+      .slice(-MAX_SAVED_MESSAGES)
+      .map(({ id, role, content, voice, replyMode, actions, detailRequests }) => ({
+        id,
+        role,
+        content,
+        ...(voice ? { voice: true } : {}),
+        ...(replyMode ? { replyMode } : {}),
+        ...(actions ? { actions } : {}),
+        ...(detailRequests ? { detailRequests } : {}),
+      }));
+    window.localStorage.setItem(key, JSON.stringify(persistable));
+  } catch {
+    // Ignore storage quota or serialization errors
+  }
+}
 
 function isAssistantUnavailable(err) {
   return [502, 503, 504].includes(err?.response?.status)
@@ -122,7 +171,8 @@ export default function AssistantWidget({ launcherContainer = null }) {
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     recorderRef.current = null;
     mediaStreamRef.current = null;
-    setMessages([]);
+    const restored = loadSavedConversation(user?.id, workspaceId);
+    setMessages(restored);
     setDraft("");
     setPendingReplyMode(null);
     setRecording(false);
@@ -132,6 +182,26 @@ export default function AssistantWidget({ launcherContainer = null }) {
     setConfirming(null);
     setBubble(null);
     bubbleHolding.current = false;
+
+    const currentVersion = contextVersion.current;
+    if (!restored.length && user?.id && assistantApi.getAssistantHistory) {
+      assistantApi
+        .getAssistantHistory({ ...(workspaceId ? { workspaceId } : {}) })
+        ?.then?.((data) => {
+          if (contextVersion.current !== currentVersion || !Array.isArray(data?.messages) || !data.messages.length) return;
+          setMessages((current) => {
+            if (current.length > 0) return current;
+            const hydrated = data.messages.map((item) => ({
+              ...item,
+              id: ++nextId,
+            }));
+            saveConversation(user?.id, workspaceId, hydrated);
+            return hydrated;
+          });
+        })
+        ?.catch?.(() => {});
+    }
+
     return () => {
       contextVersion.current++;
       requestRef.current?.abort();
@@ -190,6 +260,28 @@ export default function AssistantWidget({ launcherContainer = null }) {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, thinking, open]);
+
+  useEffect(() => {
+    if (!user?.id || messages.some((m) => m.streaming)) return;
+    saveConversation(user.id, workspaceId, messages);
+  }, [messages, user?.id, workspaceId]);
+
+  function clearConversation() {
+    if (thinking || recording || transcribing || Boolean(confirming)) return;
+    stopPlayback();
+    setMessages([]);
+    setError("");
+    setVoiceError("");
+    try {
+      const key = storageKeyFor(user?.id, workspaceId);
+      if (key && typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // ignore storage errors
+    }
+    assistantApi.clearAssistantHistory?.({ ...(workspaceId ? { workspaceId } : {}) })?.catch?.(() => {});
+  }
 
   function stopPlayback() {
     if (ttsRef.current) {
@@ -645,21 +737,34 @@ export default function AssistantWidget({ launcherContainer = null }) {
 
             {/* Which workspace the assistant would work in: the one being
                 viewed, or all of the user's workspaces everywhere else. */}
-            <div className="assistant-context flex shrink-0 items-center gap-2 border-b border-ink-900/[0.06] px-3 pb-2 dark:border-white/[0.06] sm:px-4 sm:pb-3">
-              <span className="text-xs text-ink-400 dark:text-ink-500">Context</span>
-              <span className="chip min-w-0">
-                {workspace ? (
-                  <WorkspaceMark
-                    name={workspace.name}
-                    color={workspace.color}
-                    logoUrl={workspace.logoUrl}
-                    className="h-4 w-4 rounded text-[8px]"
-                  />
-                ) : (
-                  <Layers className="h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-brand-400" />
-                )}
-                <span className="truncate">{workspace ? workspace.name : "All your workspaces"}</span>
-              </span>
+            <div className="assistant-context flex shrink-0 items-center justify-between gap-2 border-b border-ink-900/[0.06] px-3 pb-2 dark:border-white/[0.06] sm:px-4 sm:pb-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-xs text-ink-400 dark:text-ink-500">Context</span>
+                <span className="chip min-w-0">
+                  {workspace ? (
+                    <WorkspaceMark
+                      name={workspace.name}
+                      color={workspace.color}
+                      logoUrl={workspace.logoUrl}
+                      className="h-4 w-4 rounded text-[8px]"
+                    />
+                  ) : (
+                    <Layers className="h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-brand-400" />
+                  )}
+                  <span className="truncate">{workspace ? workspace.name : "All your workspaces"}</span>
+                </span>
+              </div>
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearConversation}
+                  disabled={thinking || recording || transcribing || Boolean(confirming)}
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-ink-400 transition-colors hover:bg-ink-900/[0.06] hover:text-ink-700 disabled:opacity-50 dark:hover:bg-white/[0.08] dark:hover:text-ink-200"
+                  title="Clear Kas conversation history"
+                >
+                  Clear chat
+                </button>
+              )}
             </div>
 
             <div ref={scrollRef} className="min-h-0 min-w-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4" aria-live="polite">

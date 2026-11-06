@@ -1,6 +1,10 @@
 import { api } from "./client.js";
 
 export const assistantStatus = () => api.get("/assistant/status").then((r) => r.data);
+export const getAssistantHistory = ({ workspaceId } = {}) =>
+  api.get("/assistant/history", { params: workspaceId ? { workspaceId } : {} }).then((r) => r.data);
+export const clearAssistantHistory = ({ workspaceId } = {}) =>
+  api.delete("/assistant/history", { params: workspaceId ? { workspaceId } : {} }).then((r) => r.data);
 function streamError(message, status = 502) {
   return Object.assign(new Error(message), { response: { status, data: { error: message } } });
 }

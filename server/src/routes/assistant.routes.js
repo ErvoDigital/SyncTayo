@@ -27,7 +27,49 @@ const active = new Set();
 const recent = new Map();
 const liveActive = new Set();
 const liveRecent = new Map();
+const userConversations = new Map();
+const MAX_STORED_MESSAGES = 40;
+
+function conversationKey(userId, workspaceId) {
+  return `${userId}:${workspaceId || "global"}`;
+}
+
+function appendUserConversation(userId, workspaceId, userMessage, assistantReply, voice = false) {
+  const key = conversationKey(userId, workspaceId);
+  const existing = userConversations.get(key) || [];
+  const now = new Date().toISOString();
+  const next = [
+    ...existing,
+    { role: "user", content: userMessage, ...(voice ? { voice: true } : {}), createdAt: now },
+    {
+      role: "assistant",
+      content: assistantReply.reply,
+      actions: assistantReply.actions || [],
+      ...(assistantReply.detailRequests ? { detailRequests: assistantReply.detailRequests } : {}),
+      replyMode: voice ? "voice" : "text",
+      createdAt: now,
+    },
+  ].slice(-MAX_STORED_MESSAGES);
+  userConversations.set(key, next);
+}
+
 router.get("/status", (req, res) => res.json({ configured: Boolean(gatewayConfig().token) }));
+
+router.get("/history", async (req, res) => {
+  const { workspaceId } = contextSchema.parse({ workspaceId: req.query?.workspaceId || undefined });
+  if (workspaceId) await assertMembership(req.userId, workspaceId);
+  const key = conversationKey(req.userId, workspaceId);
+  res.json({ messages: userConversations.get(key) || [] });
+});
+
+router.delete("/history", async (req, res) => {
+  const { workspaceId } = contextSchema.parse({ workspaceId: req.query?.workspaceId || req.body?.workspaceId || undefined });
+  if (workspaceId) await assertMembership(req.userId, workspaceId);
+  const key = conversationKey(req.userId, workspaceId);
+  userConversations.delete(key);
+  res.json({ cleared: true });
+});
+
 router.post("/message", async (req, res) => {
   const data = requestSchema.parse(req.body);
   const now = Date.now();
@@ -53,6 +95,7 @@ router.post("/message", async (req, res) => {
   try {
     const result = await answerAssistant({ ...data, userId: req.userId, signal: controller.signal, ...(streaming ? { onProgress: sendProgress } : {}) });
     if (!controller.signal.aborted) {
+      appendUserConversation(req.userId, data.workspaceId, data.message, result, data.interactionMode === "voice");
       if (streaming) { sendProgress({ type: "result", ...result }); res.end(); }
       else res.json(result);
     }
