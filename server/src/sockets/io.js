@@ -22,12 +22,16 @@ export function getIo() {
 function publish(target, event, payload) {
   ioInstance?.to(target).emit(event, payload);
   prisma.realtimeEvent
-    .create({ data: { target, event, payload: JSON.stringify(payload) } })
-    .catch((err) => console.error(`realtime publish failed (${target}/${event})`, err));
+    ?.create({ data: { target, event, payload: JSON.stringify(payload) } })
+    ?.catch((err) => console.error(`realtime publish failed (${target}/${event})`, err));
 }
 
 export function emitToDocument(documentId, event, payload) {
   return publish(`document:${documentId}`, event, payload);
+}
+
+export function emitToConversation(conversationId, event, payload) {
+  return publish(`conversation:${conversationId}`, event, payload);
 }
 
 export function emitToUser(userId, event, payload) {

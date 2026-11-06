@@ -1,4 +1,5 @@
 import { z } from "zod";
+import * as Y from "yjs";
 import { prisma } from "../db/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { emitToWorkspace } from "../sockets/io.js";
@@ -135,4 +136,36 @@ export async function deleteWorkspaceDocument(req, res) {
   evictDocument(documentId);
   emitToWorkspace(workspaceId, "document:deleted", { id: documentId });
   res.json({ message: "Document deleted" });
+}
+
+export async function downloadWorkspaceDocument(req, res) {
+  const { workspaceId, documentId } = req.params;
+  const { format = "markdown" } = req.query;
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: { assignees: true },
+  });
+  if (!document || document.workspaceId !== workspaceId) throw new ApiError(404, "Document not found");
+  if (!isDocumentVisible(req.userId, req.membership, document)) {
+    throw new ApiError(403, "You don't have access to this document");
+  }
+
+  const ydoc = new Y.Doc();
+  try {
+    if (document.content) Y.applyUpdate(ydoc, document.content);
+    const xml = ydoc.getXmlFragment("default").toString();
+    const safeTitle = (document.title || "document").replace(/[^\w\- ]+/g, "").trim() || "document";
+    if (format === "html") {
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${document.title}</title><style>body{font-family:sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.6;}</style></head><body><h1>${document.title}</h1>${xml}</body></html>`;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${safeTitle}.html"`);
+      return res.send(html);
+    }
+    const markdown = `# ${document.title}\n\n` + xml.replace(/<p>/g, "").replace(/<\/p>/g, "\n\n").replace(/<[^>]+>/g, "").trim();
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeTitle}.md"`);
+    res.send(markdown);
+  } finally {
+    ydoc.destroy();
+  }
 }

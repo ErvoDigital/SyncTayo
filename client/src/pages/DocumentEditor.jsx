@@ -16,7 +16,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import ImageExtension from "@tiptap/extension-image";
 import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
 import * as Y from "yjs";
-import { X, Lock, FileText, Plus } from "lucide-react";
+import { X, Lock, FileText, Plus, Download, Users } from "lucide-react";
 import * as documentsApi from "../api/documents.js";
 import * as workspacesApi from "../api/workspaces.js";
 import { apiErrorMessage } from "../api/client.js";
@@ -461,12 +461,28 @@ export default function DocumentEditor() {
         )}
         <div className="flex shrink-0 items-center -space-x-2">
           {peers.map((p) => (
-            <div key={p.userId} title={p.name} className="ring-2 ring-white rounded-full">
+            <div key={p.userId} title={`${p.name} (live editing)`} className="ring-2 ring-white rounded-full">
               <Avatar name={p.name} color={p.avatarColor} size={26} />
             </div>
           ))}
         </div>
+        {peers.length > 0 && (
+          <span className="hidden xl:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <Users className="h-3 w-3" /> Live
+          </span>
+        )}
         <ModeSwitcher mode={mode} onChange={setMode} />
+        {documentReady && (
+          <button
+            onClick={() => exportDocument(editorInstance, title, "markdown", layout)}
+            title="Download document as Markdown"
+            aria-label="Download document"
+            className="btn-secondary shrink-0 !px-2.5 !py-1.5 !text-xs inline-flex items-center gap-1"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Download</span>
+          </button>
+        )}
         {documentReady && <DocumentHistory workspaceId={workspaceId} documentId={docId} editor={editorInstance} ydoc={ydoc} onLayout={applyLayout} onTitle={handleTitleChange} />}
         {documentReady && mode !== "viewing" && <button onClick={() => { editorInstance?.chain().addPage().run(); setPageless(false); }} disabled={!editorInstance} aria-label="Add page" className="btn-primary shrink-0 !px-2.5 !py-1.5 !text-xs"><Plus className="h-3.5 w-3.5" /><span className="hidden sm:inline">Add page</span></button>}
       </div>

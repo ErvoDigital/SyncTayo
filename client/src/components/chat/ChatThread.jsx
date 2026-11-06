@@ -136,6 +136,23 @@ function AttachmentIcon({ mimeType, className }) {
   return <FileIcon className={className} />;
 }
 
+function CheckIcon({ className = "h-3 w-3" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function CheckCheckIcon({ className = "h-3 w-3" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 6 7 17l-5-5" />
+      <path d="m22 10-7.5 7.5L13 16" />
+    </svg>
+  );
+}
+
 // The message list + composer for one conversation. Shared by the global
 // Messages page and each workspace's own Chat section.
 // headerStart sits before the conversation name: the phone layouts put
@@ -149,6 +166,7 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
   const confirm = useConfirm();
   const openProfile = useMemberProfile();
   const [messages, setMessages] = useState([]);
+  const [readReceipts, setReadReceipts] = useState([]);
   const [draft, setDraft] = useState(() => readChatDraft(user.id, conversation.id));
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -292,8 +310,11 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
         shouldScrollToBottom.current = true;
         page.messages.forEach((m) => knownMessages.current.add(m.id));
         setMessages((prev) => mergeMessages(page.messages, prev));
+        if (page.readReceipts) setReadReceipts(page.readReceipts);
         setNextCursor(page.nextCursor || null);
         setLoadError("");
+        messagesApi.markConversationRead?.(conversationId)?.catch?.(() => {});
+        socket?.emit("conversation:read", { conversationId });
       }).catch((err) => {
         if (!cancelled && requestId === historyRequest.current) setLoadError(apiErrorMessage(err));
       }).finally(() => {
@@ -369,6 +390,21 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
       if (!shouldScrollToBottom.current) setNewMessages((count) => count + 1);
       else { setNewMessages(0); setAwayFromBottom(false); }
       setMessages((prev) => mergeMessages(prev, [msg]));
+      if (msg.sender.id !== user.id) {
+        messagesApi.markConversationRead?.(conversationId)?.catch?.(() => {});
+        socket?.emit("conversation:read", { conversationId });
+      }
+    };
+    const onRead = ({ conversationId: cid, userId: uid, lastReadAt: lra }) => {
+      if (cid !== conversationId) return;
+      setReadReceipts((prev) => {
+        const existing = prev.find((r) => r.userId === uid);
+        if (existing) {
+          return prev.map((r) => (r.userId === uid ? { ...r, lastReadAt: lra } : r));
+        }
+        const member = conversation.participants?.find((p) => p.id === uid);
+        return [...prev, { userId: uid, name: member?.name || "Participant", avatarColor: member?.avatarColor, lastReadAt: lra }];
+      });
     };
     const onTyping = ({ conversationId: cid, userId, isTyping }) => {
       if (cid !== conversationId || userId === user.id) return;
@@ -390,11 +426,13 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
       setReactionPickerFor((id) => (id === messageId ? null : id));
     };
     socket.on("message:new", onMessage);
+    socket.on("conversation:read", onRead);
     socket.on("typing", onTyping);
     socket.on("message:reaction", onReaction);
     socket.on("message:deleted", onDeleted);
     return () => {
       socket.off("message:new", onMessage);
+      socket.off("conversation:read", onRead);
       socket.off("typing", onTyping);
       socket.off("message:reaction", onReaction);
       socket.off("message:deleted", onDeleted);
@@ -600,6 +638,7 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
   }
 
   const typingNames = typingUsers.map((id) => conversation.participants?.find((p) => p.id === id)?.name?.split(" ")[0] || "Someone");
+  const lastUserMessageId = [...messages].reverse().find((msg) => msg.sender.id === user.id)?.id;
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink-50 dark:bg-ink-900">
@@ -689,6 +728,11 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
             const grouped = !searchQuery && previous && !newDay && previous.sender.id === m.sender.id && new Date(m.createdAt) - new Date(previous.createdAt) < 5 * 60 * 1000;
             const showAvatar = !mine && !grouped;
             const canDelete = mine || canModerate;
+            const isLastUserMessage = mine && m.id === lastUserMessageId;
+            const messageTime = new Date(m.createdAt).getTime();
+            const seenBy = mine
+              ? readReceipts.filter((r) => r.userId !== user.id && r.lastReadAt && new Date(r.lastReadAt).getTime() >= messageTime)
+              : [];
             return (
               <Fragment key={m.id}>
               {newDay && <div className="flex items-center gap-3 py-3" role="separator" aria-label={dayLabel(m.createdAt)}>
@@ -757,8 +801,27 @@ export default function ChatThread({ conversation, headerStart, headerExtra, tar
                         </span>
                       </button>
                     )}
-                    <p className={`mt-1 text-right text-[10px] ${mine ? "text-white/70" : "text-ink-400"}`}><time dateTime={m.createdAt} title={new Date(m.createdAt).toLocaleString()}>{timeLabel(m.createdAt)}</time></p>
+                    <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-white/70" : "text-ink-400"}`}>
+                      <time dateTime={m.createdAt} title={new Date(m.createdAt).toLocaleString()}>{timeLabel(m.createdAt)}</time>
+                      {mine && (
+                        <span
+                          title={seenBy.length > 0 ? `Seen by ${seenBy.map((s) => s.name || "Member").join(", ")}` : "Delivered"}
+                          className="inline-flex items-center ml-0.5"
+                        >
+                          {seenBy.length > 0 ? (
+                            <CheckCheckIcon className="h-3 w-3 text-brand-200" aria-label="Seen" />
+                          ) : (
+                            <CheckIcon className="h-3 w-3 text-white/50" aria-label="Delivered" />
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {isLastUserMessage && seenBy.length > 0 && (
+                    <p className="mt-0.5 text-right text-[10px] text-ink-400 dark:text-ink-500 font-medium">
+                      Seen by {seenBy.map((s) => s.name?.split(" ")[0]).slice(0, 2).join(", ")}{seenBy.length > 2 ? ` +${seenBy.length - 2}` : ""}
+                    </p>
+                  )}
 
                     <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : ""}`}>
                       {m.content && <button type="button" aria-label="Copy message" title="Copy message" onClick={() => copyMessage(m)}

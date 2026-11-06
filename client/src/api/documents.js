@@ -9,6 +9,10 @@ export const listDocuments = (workspaceId) =>
 export const getDocument = (workspaceId, documentId) =>
   api.get(`/workspaces/${workspaceId}/documents/${documentId}`).then((r) => r.data.document);
 
+export const downloadDocument = (workspaceId, documentId, format = "markdown") =>
+  api.get(`/workspaces/${workspaceId}/documents/${documentId}/download`, { params: { format }, responseType: "blob" })
+    .then((r) => r.data);
+
 export const createDocument = (workspaceId, data = {}) =>
   api.post(`/workspaces/${workspaceId}/documents`, data).then((r) => r.data.document);
 

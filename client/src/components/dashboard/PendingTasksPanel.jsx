@@ -40,9 +40,47 @@ export default function PendingTasksPanel({ tasks }) {
 
   const sorted = [...tasks].sort(byPriority);
   const startOfToday = new Date(new Date().toDateString());
+  const total = tasks.length;
+  const urgentCount = tasks.filter((t) => t.tier === "TIER_1").length;
+  const highCount = tasks.filter((t) => t.tier === "TIER_2").length;
+  const mediumCount = tasks.filter((t) => !t.tier || t.tier === "TIER_3").length;
+  const lowCount = tasks.filter((t) => t.tier === "TIER_4").length;
+  const overdueCount = tasks.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday).length;
 
   return (
     <div>
+      {/* Graphical summary bar for priority distribution & urgency */}
+      <div className="mb-3 rounded-xl border border-ink-900/[0.06] bg-ink-50/50 p-3 dark:border-white/[0.06] dark:bg-white/[0.02]">
+        <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-ink-600 dark:text-ink-300">
+          <span>Priority Distribution ({total} open)</span>
+          {overdueCount > 0 ? (
+            <span className="font-semibold text-red-600 dark:text-red-400">{overdueCount} overdue</span>
+          ) : (
+            <span className="text-emerald-600 dark:text-emerald-400">All on track</span>
+          )}
+        </div>
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-ink-200/70 dark:bg-ink-700/60" role="img" aria-label="Task priority breakdown">
+          {urgentCount > 0 && (
+            <div style={{ width: `${(urgentCount / total) * 100}%` }} className="bg-red-500 transition-all" title={`Urgent: ${urgentCount}`} />
+          )}
+          {highCount > 0 && (
+            <div style={{ width: `${(highCount / total) * 100}%` }} className="bg-amber-500 transition-all" title={`High: ${highCount}`} />
+          )}
+          {mediumCount > 0 && (
+            <div style={{ width: `${(mediumCount / total) * 100}%` }} className="bg-brand-500 transition-all" title={`Medium: ${mediumCount}`} />
+          )}
+          {lowCount > 0 && (
+            <div style={{ width: `${(lowCount / total) * 100}%` }} className="bg-ink-400 transition-all" title={`Low: ${lowCount}`} />
+          )}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-500 dark:text-ink-400">
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" />Urgent ({urgentCount})</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" />High ({highCount})</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-brand-500" />Medium ({mediumCount})</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-ink-400" />Low ({lowCount})</span>
+        </div>
+      </div>
+
       <div className="space-y-0.5">
         {sorted.slice(0, VISIBLE).map((t) => {
           const overdue = t.dueDate && new Date(t.dueDate) < startOfToday;

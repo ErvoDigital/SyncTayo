@@ -13,3 +13,9 @@ export const updateTask = (workspaceId, taskId, data) =>
   api.patch(`/workspaces/${workspaceId}/tasks/${taskId}`, data).then((r) => r.data.task);
 export const deleteTask = (workspaceId, taskId) =>
   api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`).then((r) => r.data);
+export const listTaskTrash = (workspaceId) =>
+  api.get(`/workspaces/${workspaceId}/tasks/trash`).then((r) => r.data.tasks);
+export const restoreTask = (workspaceId, taskId) =>
+  api.post(`/workspaces/${workspaceId}/tasks/${taskId}/restore`).then((r) => r.data.task);
+export const purgeTask = (workspaceId, taskId) =>
+  api.delete(`/workspaces/${workspaceId}/tasks/${taskId}/purge`).then((r) => r.data);

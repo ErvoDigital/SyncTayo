@@ -47,7 +47,7 @@ function FileIcon({ mimeType, className }) {
   return <File className={className} />;
 }
 
-export default function TaskDetailsPanel({ open, task, workspaceId, statuses, onClose, onEdit }) {
+export default function TaskDetailsPanel({ open, task, workspaceId, statuses, onClose, onEdit, canEdit = true }) {
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -171,10 +171,11 @@ export default function TaskDetailsPanel({ open, task, workspaceId, statuses, on
             </button>
             <button
               type="button"
-              onClick={onEdit}
-              title="Edit task"
+              onClick={canEdit ? onEdit : undefined}
+              disabled={!canEdit}
+              title={canEdit ? "Edit task" : "Only the task creator, assignee, or members with Manage Tasks permission can edit this task"}
               aria-label="Edit task"
-              className="rounded-lg p-2 sm:p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-600 dark:hover:bg-ink-700 dark:hover:text-ink-100"
+              className="rounded-lg p-2 sm:p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-ink-700 dark:hover:text-ink-100"
             >
               <Pencil className="h-4 w-4" />
             </button>

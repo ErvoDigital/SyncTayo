@@ -2,7 +2,7 @@ import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { notify } from "../services/notification.service.js";
-import { emitToUser } from "../sockets/io.js";
+import { emitToUser, emitToConversation } from "../sockets/io.js";
 import { can } from "../services/permissions.js";
 import { purgeConversationAndAttachments } from "../services/conversationPurge.js";
 
@@ -209,11 +209,63 @@ export async function getMessages(req, res) {
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit);
   const oldest = page[page.length - 1];
+
+  // Update caller's read status and return participant read receipts
+  if (prisma.conversationParticipant.updateMany) {
+    await prisma.conversationParticipant.updateMany({
+      where: { conversationId: req.params.conversationId, userId: req.userId },
+      data: { lastReadAt: new Date() },
+    }).catch(() => {});
+  }
+
+  const participants = prisma.conversationParticipant?.findMany
+    ? await prisma.conversationParticipant.findMany({
+        where: { conversationId: req.params.conversationId },
+        include: { user: { select: { id: true, name: true, avatarColor: true } } },
+      })
+    : [];
+
+  const readReceipts = (participants || []).map((p) => ({
+    userId: p.userId,
+    name: p.user?.name || "Member",
+    avatarColor: p.user?.avatarColor,
+    lastReadAt: p.lastReadAt,
+  }));
+
   res.json({
     messages: page.reverse().map(serializeMessage),
     hasMore,
     nextCursor: hasMore && oldest ? Buffer.from(JSON.stringify({ id: oldest.id, createdAt: oldest.createdAt.toISOString() })).toString("base64url") : null,
+    readReceipts,
   });
+}
+
+export async function markConversationRead(req, res) {
+  await assertParticipant(req.params.conversationId, req.userId);
+  const now = new Date();
+  await prisma.conversationParticipant.updateMany({
+    where: { conversationId: req.params.conversationId, userId: req.userId },
+    data: { lastReadAt: now },
+  });
+  emitToConversation(req.params.conversationId, "conversation:read", {
+    conversationId: req.params.conversationId,
+    userId: req.userId,
+    lastReadAt: now.toISOString(),
+  });
+  const participants = await prisma.conversationParticipant.findMany({
+    where: { conversationId: req.params.conversationId },
+    select: { userId: true },
+  });
+  for (const p of participants) {
+    if (p.userId !== req.userId) {
+      emitToUser(p.userId, "conversation:read", {
+        conversationId: req.params.conversationId,
+        userId: req.userId,
+        lastReadAt: now.toISOString(),
+      });
+    }
+  }
+  res.json({ success: true, lastReadAt: now });
 }
 
 export async function sendMessageRest(req, res) {

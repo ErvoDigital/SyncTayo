@@ -133,6 +133,17 @@ export async function updateTask(req, res) {
   const existing = await prisma.task.findUnique({ where: { id: req.params.taskId } });
   if (!existing || existing.workspaceId !== req.params.workspaceId) throw new ApiError(404, "Task not found");
 
+  // Task editing permission control: members without tasks.manage can edit tasks they created or are assigned to.
+  const isOwnerOrAssignee = existing.createdById === req.userId || existing.assigneeId === req.userId;
+  const canManageTasks = can(req.membership, "tasks.manage");
+  const isContentEdit = Object.keys(data).some((k) => !["order", "isPinned", "isSnoozed"].includes(k));
+  if (isContentEdit && !isOwnerOrAssignee && !canManageTasks) {
+    const isOnlyStatus = Object.keys(data).length === 1 && data.status !== undefined;
+    if (!isOnlyStatus) {
+      throw new ApiError(403, "You can only edit tasks created by or assigned to you");
+    }
+  }
+
   // Moving a task to another status is its assignee's call; anyone else needs
   // tasks.status (every admin has it). Checked against who it was assigned to
   // before this edit, so reassigning and moving in one request can't skip it.
@@ -187,18 +198,112 @@ export async function updateTask(req, res) {
   res.json({ task: serialize(task) });
 }
 
+const workspaceTaskTrash = new Map();
+
 export async function deleteTask(req, res) {
   const existing = await prisma.task.findUnique({
     where: { id: req.params.taskId },
-    include: { attachments: { include: { versions: true } } },
+    include: {
+      attachments: { include: { versions: true } },
+      workspace: { select: { name: true, color: true } },
+      assignee: { select: { id: true, name: true, avatarColor: true } },
+    },
   });
   if (!existing || existing.workspaceId !== req.params.workspaceId) throw new ApiError(404, "Task not found");
 
-  await deleteStoredVersions(
-    existing.workspaceId,
-    existing.attachments.flatMap((attachment) => attachment.versions)
-  );
+  const isOwnerOrAssignee = !req.userId || existing.createdById === req.userId || existing.assigneeId === req.userId;
+  if (!isOwnerOrAssignee && !can(req.membership, "tasks.manage")) {
+    throw new ApiError(403, "You can only delete tasks created by or assigned to you");
+  }
+
+  if (existing.attachments?.length) {
+    await deleteStoredVersions(
+      existing.workspaceId,
+      existing.attachments.flatMap((attachment) => attachment.versions || [])
+    );
+  }
+
+  if (!workspaceTaskTrash.has(existing.workspaceId)) {
+    workspaceTaskTrash.set(existing.workspaceId, new Map());
+  }
+  const trash = workspaceTaskTrash.get(existing.workspaceId);
+  trash.set(existing.id, {
+    task: { ...existing, attachments: [] },
+    deletedAt: new Date(),
+    deletedById: req.userId,
+  });
+
   await prisma.task.delete({ where: { id: req.params.taskId } });
   emitToWorkspace(req.params.workspaceId, "task:deleted", { id: req.params.taskId });
-  res.json({ message: "Task deleted" });
+  res.json({ message: "Task moved to trash" });
+}
+
+export async function listTaskTrash(req, res) {
+  const trash = workspaceTaskTrash.get(req.params.workspaceId);
+  const tasks = [];
+  if (trash) {
+    for (const [id, entry] of trash.entries()) {
+      tasks.push({
+        ...serialize(entry.task),
+        deletedAt: entry.deletedAt,
+        deletedById: entry.deletedById,
+      });
+    }
+  }
+  res.json({ tasks: tasks.reverse() });
+}
+
+export async function restoreTask(req, res) {
+  const trash = workspaceTaskTrash.get(req.params.workspaceId);
+  const entry = trash?.get(req.params.taskId);
+  if (!entry) throw new ApiError(404, "Task not found in trash");
+
+  const t = entry.task;
+  const restored = await prisma.task.create({
+    data: {
+      id: t.id,
+      workspaceId: t.workspaceId,
+      title: t.title,
+      description: t.description,
+      tier: t.tier,
+      status: t.status,
+      dueDate: t.dueDate,
+      estimatedMinutes: t.estimatedMinutes,
+      isPinned: t.isPinned,
+      isSnoozed: t.isSnoozed,
+      order: t.order,
+      createdById: t.createdById,
+      assigneeId: t.assigneeId,
+      remindedAt: t.remindedAt,
+      parentTaskId: t.parentTaskId,
+      sourceMessageId: t.sourceMessageId,
+    },
+    include: {
+      workspace: { select: { name: true, color: true } },
+      assignee: { select: { id: true, name: true, avatarColor: true } },
+    },
+  });
+
+  trash.delete(req.params.taskId);
+  emitToWorkspace(req.params.workspaceId, "task:created", serialize(restored));
+  res.json({ task: serialize(restored) });
+}
+
+export async function purgeTask(req, res) {
+  const trash = workspaceTaskTrash.get(req.params.workspaceId);
+  const entry = trash?.get(req.params.taskId);
+  if (!entry) throw new ApiError(404, "Task not found in trash");
+
+  if (!can(req.membership, "tasks.manage") && entry.deletedById !== req.userId) {
+    throw new ApiError(403, "You cannot permanently delete this task");
+  }
+
+  if (entry.task.attachments?.length) {
+    await deleteStoredVersions(
+      entry.task.workspaceId,
+      entry.task.attachments.flatMap((attachment) => attachment.versions || [])
+    );
+  }
+  trash.delete(req.params.taskId);
+  res.json({ message: "Task permanently deleted" });
 }

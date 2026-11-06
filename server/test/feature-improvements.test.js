@@ -10,8 +10,10 @@ import { expandRecurrence, availableSlots } from "../src/services/calendarSchedu
 import { detectConflicts } from "../src/services/conflict.service.js";
 import { assertParent, assertAcyclicDependency, changedTaskFields } from "../src/services/taskCollaboration.js";
 import { meetingIceConfig } from "../src/routes/meetings.routes.js";
-import { sendMessageRest, updateMessage, getMessages } from "../src/controllers/messages.controller.js";
+import { sendMessageRest, updateMessage, getMessages, markConversationRead } from "../src/controllers/messages.controller.js";
 import { trashAsset, listTrash, restoreAsset, purgeAsset } from "../src/controllers/assetRecovery.controller.js";
+import { updateTask, deleteTask, listTaskTrash, restoreTask, purgeTask } from "../src/controllers/tasks.controller.js";
+import { downloadWorkspaceDocument } from "../src/controllers/documents.controller.js";
 import { setPrismaClient, clearPrismaClient } from "../src/db/prisma.js";
 
 function mockRes() {
@@ -452,4 +454,252 @@ test("Meeting ICE configuration returns STUN by default and signed TURN credenti
   ]);
   assert.match(withTurn.iceServers[1].username, /:user-1$/);
   assert.ok(withTurn.iceServers[1].credential);
+});
+
+test("MLP: Task permission controls, soft-delete trash bin, restore, and permanent purge work accurately", async () => {
+  const tasksMap = new Map([
+    ["task-1", {
+      id: "task-1",
+      workspaceId: "ws-1",
+      title: "Launch MLP Checklist",
+      description: "Verify all 8 recommendations",
+      tier: "TIER_1",
+      status: "TODO",
+      dueDate: new Date("2026-10-20T09:00:00.000Z"),
+      estimatedMinutes: 60,
+      isPinned: false,
+      isSnoozed: false,
+      order: 1,
+      createdById: "user-creator",
+      assigneeId: "user-assignee",
+      remindedAt: null,
+      parentTaskId: null,
+      sourceMessageId: null,
+      attachments: [],
+      workspace: { name: "Core Team", color: "#5B5BD6" },
+      assignee: { id: "user-assignee", name: "Bob", avatarColor: "#10B981" },
+    }],
+  ]);
+
+  const db = {
+    task: {
+      async findUnique({ where }) { return tasksMap.get(where.id) || null; },
+      async update({ where, data }) {
+        const current = tasksMap.get(where.id);
+        const updated = { ...current, ...data };
+        tasksMap.set(where.id, updated);
+        return updated;
+      },
+      async delete({ where }) { tasksMap.delete(where.id); },
+      async create({ data }) {
+        const created = {
+          ...data,
+          workspace: { name: "Core Team", color: "#5B5BD6" },
+          assignee: { id: data.assigneeId, name: "Bob", avatarColor: "#10B981" },
+        };
+        tasksMap.set(created.id, created);
+        return created;
+      },
+    },
+    taskActivity: { async createMany() { return {}; } },
+    realtimeEvent: { async create() { return {}; } },
+  };
+
+  setPrismaClient(db);
+  try {
+    // 1. Unauthorized member (neither creator, assignee, nor tasks.manage) cannot edit or delete
+    await assert.rejects(
+      updateTask({
+        userId: "user-stranger",
+        membership: { role: "MEMBER", permissions: "" },
+        params: { workspaceId: "ws-1", taskId: "task-1" },
+        body: { title: "Unauthorized edit" },
+      }, mockRes()),
+      /only edit tasks created by or assigned to you/
+    );
+
+    await assert.rejects(
+      deleteTask({
+        userId: "user-stranger",
+        membership: { role: "MEMBER", permissions: "" },
+        params: { workspaceId: "ws-1", taskId: "task-1" },
+      }, mockRes()),
+      /only delete tasks created by or assigned to you/
+    );
+
+    // 2. Member granted tasks.manage CAN edit the task
+    const editRes = mockRes();
+    await updateTask({
+      userId: "user-manager",
+      membership: { role: "MEMBER", permissions: "tasks.manage" },
+      params: { workspaceId: "ws-1", taskId: "task-1" },
+      body: { title: "Launch MLP Checklist (Reviewed)" },
+    }, editRes);
+    assert.equal(editRes.body.task.title, "Launch MLP Checklist (Reviewed)");
+
+    // 3. Creator or assignee CAN delete task -> moves to workspace task trash
+    const delRes = mockRes();
+    await deleteTask({
+      userId: "user-creator",
+      membership: { role: "MEMBER", permissions: "" },
+      params: { workspaceId: "ws-1", taskId: "task-1" },
+    }, delRes);
+    assert.equal(tasksMap.has("task-1"), false);
+
+    // 4. Trash lists the deleted task
+    const trashListRes = mockRes();
+    await listTaskTrash({ params: { workspaceId: "ws-1" } }, trashListRes);
+    assert.equal(trashListRes.body.tasks.length, 1);
+    assert.equal(trashListRes.body.tasks[0].id, "task-1");
+
+    // 5. Restore brings the task back into active workspace tasks
+    const restoreRes = mockRes();
+    await restoreTask({ params: { workspaceId: "ws-1", taskId: "task-1" } }, restoreRes);
+    assert.equal(tasksMap.has("task-1"), true);
+    assert.equal(restoreRes.body.task.title, "Launch MLP Checklist (Reviewed)");
+
+    // 6. Delete again and permanently purge from trash
+    await deleteTask({
+      userId: "user-creator",
+      membership: { role: "MEMBER", permissions: "" },
+      params: { workspaceId: "ws-1", taskId: "task-1" },
+    }, mockRes());
+    const purgeRes = mockRes();
+    await purgeTask({
+      userId: "user-creator",
+      membership: { role: "MEMBER", permissions: "" },
+      params: { workspaceId: "ws-1", taskId: "task-1" },
+    }, purgeRes);
+    const emptyTrashRes = mockRes();
+    await listTaskTrash({ params: { workspaceId: "ws-1" } }, emptyTrashRes);
+    assert.equal(emptyTrashRes.body.tasks.length, 0);
+  } finally {
+    clearPrismaClient(db);
+  }
+});
+
+test("MLP: Direct document download exports Markdown and HTML with safe Content-Disposition headers", async () => {
+  const ydoc = new Y.Doc();
+  const p = new Y.XmlElement("p");
+  p.insert(0, [new Y.XmlText("All systems operational.")]);
+  ydoc.getXmlFragment("default").insert(0, [p]);
+  const stateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+
+  const db = {
+    document: {
+      async findUnique({ where }) {
+        if (where.id === "doc-1") {
+          return {
+            id: "doc-1",
+            workspaceId: "ws-1",
+            title: "MLP Architecture Spec",
+            content: stateBuffer,
+            visibility: "WORKSPACE",
+            assignees: [],
+            updatedAt: new Date("2026-10-18T10:00:00.000Z"),
+          };
+        }
+        return null;
+      },
+    },
+  };
+
+  setPrismaClient(db);
+  try {
+    const makeDownloadRes = () => ({
+      headers: {},
+      body: null,
+      setHeader(k, v) { this.headers[k] = v; },
+      send(payload) { this.body = payload; return this; },
+    });
+
+    const mdRes = makeDownloadRes();
+    await downloadWorkspaceDocument({
+      userId: "user-1",
+      membership: { role: "MEMBER", permissions: "" },
+      params: { workspaceId: "ws-1", documentId: "doc-1" },
+      query: { format: "markdown" },
+    }, mdRes);
+    assert.match(mdRes.headers["Content-Type"], /text\/markdown/);
+    assert.match(mdRes.headers["Content-Disposition"], /MLP Architecture Spec\.md/);
+    assert.match(mdRes.body, /# MLP Architecture Spec/);
+    assert.match(mdRes.body, /All systems operational/);
+
+    const htmlRes = makeDownloadRes();
+    await downloadWorkspaceDocument({
+      userId: "user-1",
+      membership: { role: "MEMBER", permissions: "" },
+      params: { workspaceId: "ws-1", documentId: "doc-1" },
+      query: { format: "html" },
+    }, htmlRes);
+    assert.match(htmlRes.headers["Content-Type"], /text\/html/);
+    assert.match(htmlRes.headers["Content-Disposition"], /MLP Architecture Spec\.html/);
+    assert.match(htmlRes.body, /<!doctype html>/i);
+  } finally {
+    clearPrismaClient(db);
+  }
+});
+
+test("MLP: Conflict warnings include verified conflict-free alternative slots, meeting priority, and task priority order", () => {
+  const events = [
+    {
+      id: "ev-a",
+      title: "Product Roadmap Review",
+      workspaceId: "ws-1",
+      workspaceName: "Product",
+      startTime: "2026-10-20T09:00:00.000Z",
+      endTime: "2026-10-20T10:00:00.000Z",
+    },
+    {
+      id: "ev-b",
+      title: "Design Critique",
+      workspaceId: "ws-2",
+      workspaceName: "Design",
+      startTime: "2026-10-20T09:30:00.000Z",
+      endTime: "2026-10-20T10:30:00.000Z",
+    },
+    {
+      id: "ev-blocker",
+      title: "Occupied 10-11 Slot",
+      workspaceId: "ws-1",
+      workspaceName: "Product",
+      startTime: "2026-10-20T10:00:00.000Z",
+      endTime: "2026-10-20T11:00:00.000Z",
+    },
+  ];
+  const tasks = [
+    {
+      id: "t-urgent",
+      title: "Hotfix Auth Flow",
+      workspaceId: "ws-1",
+      workspaceName: "Product",
+      tier: "TIER_1",
+      dueDate: "2026-10-20T08:00:00.000Z",
+      estimatedMinutes: 60,
+    },
+    {
+      id: "t-low",
+      title: "Update Icons",
+      workspaceId: "ws-2",
+      workspaceName: "Design",
+      tier: "TIER_4",
+      dueDate: "2026-10-20T09:00:00.000Z",
+      estimatedMinutes: 30,
+    },
+  ];
+
+  const conflicts = detectConflicts({ events, tasks, timeZone: "UTC" });
+  const overlap = conflicts.find((c) => c.type === "EVENT_OVERLAP" && c.items.some((i) => i.id === "ev-a") && c.items.some((i) => i.id === "ev-b"));
+  assert.ok(overlap);
+  assert.equal(overlap.suggestions.meetingPriority.keepId, "ev-a");
+  assert.equal(overlap.suggestions.meetingPriority.rescheduleId, "ev-b");
+  // Because 10:00-11:00 is occupied by ev-blocker, the "After" slot must slide to 11:00!
+  const afterSlot = overlap.suggestions.alternativeSlots.find((s) => s.label.startsWith("After"));
+  assert.equal(afterSlot.startTime, "2026-10-20T11:00:00.000Z");
+
+  const deadlineClash = conflicts.find((c) => c.type === "DEADLINE_CLASH");
+  assert.ok(deadlineClash);
+  assert.equal(deadlineClash.suggestions.recommendedTaskOrder.firstTaskId, "t-urgent");
+  assert.equal(deadlineClash.suggestions.recommendedTaskOrder.secondTaskId, "t-low");
+  assert.ok(deadlineClash.suggestions.recommendedTaskOrder.suggestedReschedule.suggestedDueDate);
 });

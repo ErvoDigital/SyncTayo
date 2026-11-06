@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { FolderOpen, FolderPlus, UploadCloud } from "lucide-react";
+import { FolderOpen, FolderPlus, HelpCircle, UploadCloud } from "lucide-react";
 import * as assetsApi from "../api/assets.js";
 import * as foldersApi from "../api/folders.js";
 import * as workspacesApi from "../api/workspaces.js";
@@ -8,6 +8,7 @@ import { apiErrorMessage } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSocket } from "../context/SocketContext.jsx";
 import { useConfirm } from "../context/ConfirmContext.jsx";
+import Modal from "../components/common/Modal.jsx";
 import AssetCard from "../components/storage/AssetCard.jsx";
 import FolderCard from "../components/storage/FolderCard.jsx";
 import FolderModal from "../components/storage/FolderModal.jsx";
@@ -56,6 +57,7 @@ export default function WorkspaceStorage() {
   // pulsing because something just landed inside it.
   const [materializeIds, setMaterializeIds] = useState(() => new Set());
   const [glowFolderId, setGlowFolderId] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const materializeTimers = useRef(new Map());
   const glowTimer = useRef(null);
   // Read inside socket handlers so they can tell "arrived in this view" from
@@ -314,6 +316,15 @@ export default function WorkspaceStorage() {
             <p className="text-xs text-ink-400 touch:hidden">Drag a new take onto an existing file to save it as the next version.</p>
           </div>
           <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn-secondary !px-2.5 inline-flex items-center gap-1.5 text-xs"
+              onClick={() => setHelpOpen(true)}
+              title="File Versioning Help"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Versioning Guide</span>
+            </button>
             <RecycleBin workspaceId={workspaceId} onChanged={load} />
             <button className="btn-secondary flex-1 sm:flex-none" onClick={() => setFolderModal({ parentId: currentFolderId })}>
               <FolderPlus className="mr-1.5 inline h-4 w-4" />
@@ -472,6 +483,59 @@ export default function WorkspaceStorage() {
           </div>
         </div>
       )}
+
+      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="File Versioning & History Guide">
+        <div className="space-y-4 text-sm text-ink-700 dark:text-ink-200">
+          <section className="rounded-xl bg-brand-50/60 p-3.5 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20">
+            <h4 className="font-semibold text-brand-900 dark:text-brand-200 mb-1 flex items-center gap-1.5">
+              <span>🔄</span> How Automatic Versioning Works
+            </h4>
+            <p className="text-xs text-brand-800/90 dark:text-brand-300">
+              When you upload a file with the same name or drag a new file directly onto an existing file card, SyncTayo automatically creates a new revision (<strong className="font-semibold">V2, V3...</strong>). Your original files are never accidentally overwritten.
+            </p>
+          </section>
+
+          <div className="space-y-3">
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-100 font-bold text-xs dark:bg-ink-800">1</span>
+              <div>
+                <p className="font-medium text-ink-800 dark:text-ink-100 text-xs">Previewing Revisions</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400">Click the version count on any card to view its timeline. You can preview any older version at any time.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-100 font-bold text-xs dark:bg-ink-800">2</span>
+              <div>
+                <p className="font-medium text-ink-800 dark:text-ink-100 text-xs">Restoring Past Versions</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400">Need to roll back? Click &ldquo;Restore&rdquo; next to any prior version. A new top-level version will be created with that content.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-100 font-bold text-xs dark:bg-ink-800">3</span>
+              <div>
+                <p className="font-medium text-ink-800 dark:text-ink-100 text-xs">Independent Downloads</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400">Each version has its own download button, so you can grab past versions whenever needed.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-100 font-bold text-xs dark:bg-ink-800">4</span>
+              <div>
+                <p className="font-medium text-ink-800 dark:text-ink-100 text-xs">Safe Recycle Bin</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400">Deleted files and all their historical versions are retained in the Recycle Bin where they can be restored.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 text-right">
+            <button type="button" className="btn-primary" onClick={() => setHelpOpen(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <UploadProgressPanel uploads={newUploads} />
     </div>

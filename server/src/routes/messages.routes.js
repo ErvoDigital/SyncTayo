@@ -6,6 +6,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/conversations", messagesController.listConversations);
+router.post("/conversations/:conversationId/read", messagesController.markConversationRead);
 router.delete("/conversations/:conversationId", messagesController.deleteConversation);
 router.get("/conversations/:conversationId/messages", messagesController.getMessages);
 router.post("/conversations/:conversationId/messages", messagesController.sendMessageRest);

@@ -18,6 +18,11 @@ export const ABILITY_GROUPS = [
         description: "Move any task to any status on the board. Without this, only the tasks assigned to them.",
       },
       {
+        key: "tasks.manage",
+        label: "Edit and manage all tasks",
+        description: "Edit details or delete any task in the workspace. Without this, only tasks they created or are assigned to.",
+      },
+      {
         key: "statuses.manage",
         label: "Customize task statuses",
         description: "Add, rename, recolor, reorder and remove the columns on the task board.",

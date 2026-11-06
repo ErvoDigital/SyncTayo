@@ -99,6 +99,24 @@ export function initSockets(httpServer, corsOrigin) {
       socket.leave(`conversation:${conversationId}`);
     });
 
+    socket.on("conversation:read", async ({ conversationId }) => {
+      try {
+        if (!conversationId) return;
+        const now = new Date();
+        await prisma.conversationParticipant.update({
+          where: { conversationId_userId: { conversationId, userId: socket.userId } },
+          data: { lastReadAt: now },
+        }).catch(() => {});
+        io.to(`conversation:${conversationId}`).emit("conversation:read", {
+          conversationId,
+          userId: socket.userId,
+          lastReadAt: now.toISOString(),
+        });
+      } catch (err) {
+        console.error("conversation:read failed", err);
+      }
+    });
+
     socket.on("message:send", async ({ conversationId, content, attachmentAssetId }, ack) => {
       try {
         const trimmed = String(content || "").trim();

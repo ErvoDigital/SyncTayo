@@ -20,11 +20,32 @@ export default function AssistantActionCards({ actions = [], workspaces = [], us
         <p className="mt-1 text-xs">Attendees: {action.preview?.people?.map((person) => person.name).join(", ") || action.data.attendeeIds?.join(", ") || "To add later"}</p>
       </>}
       {action.data.deferredFields?.length > 0 && <p className="mt-1 text-xs text-ink-500 dark:text-ink-400">You can add the remaining details later.</p>}
-      {action.error && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{action.error}</p>}
-      {action.result ? <>
-        <p role="status" className="mt-2 font-medium text-brand-700 dark:text-brand-300">{action.kind.startsWith("task") ? "Task saved" : action.kind === "event_draft" ? "Meeting draft saved" : "Meeting saved"}</p>
-        <Link className="mt-1 inline-block min-h-11 py-3 text-brand-600 underline dark:text-brand-400" to={`/workspaces/${action.result.workspaceId}/${action.kind.startsWith("task") ? "tasks" : "calendar"}`}>Saved — open {action.kind.startsWith("task") ? "task board" : "calendar"}</Link>
-      </> : action.dismissed ? <p className="mt-2 text-xs">Dismissed</p> : (
+      {action.dismissed ? (
+        <p className="mt-2 text-xs text-ink-400">Dismissed</p>
+      ) : action.result ? (
+        <div className="mt-3 rounded-lg bg-emerald-50 p-2.5 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
+          <p role="status" className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 text-xs">
+            <span>✅</span> {action.kind.startsWith("task") ? "Task saved successfully!" : action.kind === "event_draft" ? "Meeting draft saved!" : "Meeting scheduled successfully!"}
+          </p>
+          <Link className="mt-1.5 inline-block text-xs font-medium text-emerald-700 underline dark:text-emerald-400" to={`/workspaces/${action.result.workspaceId}/${action.kind.startsWith("task") ? "tasks" : "calendar"}`}>
+            Open in {action.kind.startsWith("task") ? "task board" : "workspace calendar"} →
+          </Link>
+        </div>
+      ) : action.error ? (
+        <div className="mt-3 rounded-lg bg-red-50 p-2.5 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20">
+          <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-300 flex items-center gap-1.5">
+            <span>⚠️</span> Action Failed: {action.error}
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button type="button" className="btn-secondary !py-1 !px-2.5 text-xs" onClick={() => onConfirm(action)} disabled={Boolean(confirming) || disabled}>
+              {confirming === action.id ? "Retrying…" : "Retry"}
+            </button>
+            <button type="button" className="btn-ghost !py-1 !px-2.5 text-xs" onClick={() => onDismiss(action.id)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className="btn-primary min-h-11" onClick={() => onConfirm(action)} disabled={Boolean(confirming) || disabled}>{confirming === action.id ? "Saving…" : "Confirm"}</button>
           <button type="button" className="btn-secondary min-h-11" onClick={() => onDismiss(action.id)} disabled={Boolean(confirming) || disabled}>Dismiss</button>

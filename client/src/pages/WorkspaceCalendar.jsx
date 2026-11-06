@@ -11,6 +11,7 @@ import WeekView from "../components/calendar/WeekView.jsx";
 import DayPanel from "../components/calendar/DayPanel.jsx";
 import EventModal from "../components/calendar/EventModal.jsx";
 import EventDetailsModal from "../components/calendar/EventDetailsModal.jsx";
+import TeamAvailabilityView from "../components/calendar/TeamAvailabilityView.jsx";
 import Spinner from "../components/common/Spinner.jsx";
 import { MonthPicker } from "../components/common/DatePicker.jsx";
 import {
@@ -31,7 +32,8 @@ const VIEW_KEY = "loft_calendar_view";
 
 function readView() {
   try {
-    return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month";
+    const v = localStorage.getItem(VIEW_KEY);
+    return v === "week" || v === "availability" ? v : "month";
   } catch {
     return "month";
   }
@@ -320,6 +322,9 @@ export default function WorkspaceCalendar() {
             <Segment active={view === "week"} aria-pressed={view === "week"} onClick={() => changeView("week")}>
               Week
             </Segment>
+            <Segment active={view === "availability"} aria-pressed={view === "availability"} onClick={() => changeView("availability")}>
+              Team
+            </Segment>
           </Segmented>
           <button className="btn-primary" onClick={() => create(selectedDate)}>
             <Plus className="h-4 w-4" /> New event
@@ -347,40 +352,57 @@ export default function WorkspaceCalendar() {
 
       {/* Explicit grid-cols-1: an implicit track grows to fit its widest
           content and pushes the week grid off-screen on phones. */}
-      <div className="grid grid-cols-1 gap-5 xl:min-h-[38rem] xl:flex-1 xl:grid-cols-[minmax(0,1fr)_22rem] xl:grid-rows-[minmax(0,1fr)]">
-        <div className={`min-w-0 ${view === "week" ? "h-[36rem] xl:h-auto" : ""}`}>
-          {view === "month" ? (
-            <MonthView
-              monthDate={monthDate}
-              events={events}
-              selectedDate={selectedDate}
-              now={now}
-              onSelect={select}
-              onReveal={reveal}
-              onCreate={create}
-              onOpenEvent={openEvent}
-            />
-          ) : (
-            <WeekView
-              weekStart={weekStart}
-              events={events}
-              selectedDate={selectedDate}
-              now={now}
-              onSelect={select}
-              onCreate={create}
-              onOpenEvent={openEvent}
-            />
-          )}
+      {view === "availability" ? (
+        <div className="min-h-[36rem] flex-1">
+          <TeamAvailabilityView
+            events={events}
+            members={members}
+            currentDate={selectedDate}
+            onDateChange={select}
+            onSchedule={(prefill) => {
+              setEditingEvent(null);
+              setEditingDraft(null);
+              setDraftStart(prefill.startTime);
+              setModalOpen(true);
+            }}
+          />
         </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 xl:min-h-[38rem] xl:flex-1 xl:grid-cols-[minmax(0,1fr)_22rem] xl:grid-rows-[minmax(0,1fr)]">
+          <div className={`min-w-0 ${view === "week" ? "h-[36rem] xl:h-auto" : ""}`}>
+            {view === "month" ? (
+              <MonthView
+                monthDate={monthDate}
+                events={events}
+                selectedDate={selectedDate}
+                now={now}
+                onSelect={select}
+                onReveal={reveal}
+                onCreate={create}
+                onOpenEvent={openEvent}
+              />
+            ) : (
+              <WeekView
+                weekStart={weekStart}
+                events={events}
+                selectedDate={selectedDate}
+                now={now}
+                onSelect={select}
+                onCreate={create}
+                onOpenEvent={openEvent}
+              />
+            )}
+          </div>
 
-        <DayPanel
-          day={selectedDate}
-          events={eventsOnDay(events, selectedDate)}
-          now={now}
-          onCreate={create}
-          onOpenEvent={openEvent}
-        />
-      </div>
+          <DayPanel
+            day={selectedDate}
+            events={eventsOnDay(events, selectedDate)}
+            now={now}
+            onCreate={create}
+            onOpenEvent={openEvent}
+          />
+        </div>
+      )}
 
       <EventDetailsModal
         onSaved={load}

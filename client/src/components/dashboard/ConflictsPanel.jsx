@@ -1,6 +1,9 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
+import * as eventsApi from "../../api/events.js";
+import * as tasksApi from "../../api/tasks.js";
+import { apiErrorMessage } from "../../api/client.js";
 import Pagination from "../common/Pagination.jsx";
 import { useWorkspaces } from "../../context/WorkspaceContext.jsx";
 import useMediaQuery from "../../hooks/useMediaQuery.js";
@@ -71,21 +74,165 @@ function ClashItem({ item, color }) {
 
 function ClashRow({ clash, colorFor }) {
   const severity = SEVERITY[clash.severity] || SEVERITY.low;
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [applying, setApplying] = useState(false);
+  const [resolutionMsg, setResolutionMsg] = useState("");
+  const [resolutionErr, setResolutionErr] = useState("");
+  const suggestions = clash.suggestions;
+
+  const rescheduleItem = useMemo(() => {
+    const targetId = suggestions?.meetingPriority?.rescheduleId;
+    if (!targetId) return clash.items.find((i) => i.kind === "event");
+    return clash.items.find((i) => i.kind === "event" && i.id === targetId) || clash.items.find((i) => i.kind === "event");
+  }, [clash.items, suggestions]);
+
+  async function handleApplySlot(slot) {
+    if (!rescheduleItem || applying) return;
+    setApplying(true);
+    setResolutionErr("");
+    setResolutionMsg("");
+    try {
+      await eventsApi.updateEvent(rescheduleItem.workspaceId, rescheduleItem.id, {
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      });
+      setResolutionMsg(`Rescheduled "${rescheduleItem.title}" to ${new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
+    } catch (err) {
+      setResolutionErr(apiErrorMessage(err));
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  async function handleApplyTaskReschedule(reschedule) {
+    if (!reschedule || applying) return;
+    const taskItem = clash.items.find((i) => i.kind === "task" && i.id === reschedule.taskId) || clash.items.find((i) => i.kind === "task");
+    const wsId = reschedule.workspaceId || taskItem?.workspaceId;
+    if (!wsId || !reschedule.taskId) return;
+    setApplying(true);
+    setResolutionErr("");
+    setResolutionMsg("");
+    try {
+      await tasksApi.updateTask(wsId, reschedule.taskId, {
+        dueDate: reschedule.suggestedDueDate,
+      });
+      setResolutionMsg(`Updated due date for "${reschedule.taskTitle}" to ${new Date(reschedule.suggestedDueDate).toLocaleDateString([], { month: "short", day: "numeric" })}`);
+    } catch (err) {
+      setResolutionErr(apiErrorMessage(err));
+    } finally {
+      setApplying(false);
+    }
+  }
+
   return (
-    <li className="flex flex-col gap-2 py-2.5 first:pt-0 last:pb-0 @2xl:flex-row @2xl:items-center @2xl:gap-4">
-      <div className="flex items-center gap-2 @2xl:w-44 @2xl:shrink-0 @2xl:items-start">
-        <span className={`h-2 w-2 shrink-0 rounded-full @2xl:mt-1.5 ${severity.dot}`} aria-hidden="true" />
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 @2xl:flex-col @2xl:gap-0.5">
-          <p className="text-sm font-medium text-ink-800 dark:text-ink-100">{TYPE_LABEL[clash.type] || "Clash"}</p>
-          <p className={`text-xs font-medium ${severity.text}`}>{severity.label}</p>
+    <li className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 border-b border-ink-900/[0.04] last:border-b-0 dark:border-white/[0.04]">
+      <div className="flex flex-col gap-2 @2xl:flex-row @2xl:items-center @2xl:gap-4">
+        <div className="flex items-center gap-2 @2xl:w-44 @2xl:shrink-0 @2xl:items-start">
+          <span className={`h-2 w-2 shrink-0 rounded-full @2xl:mt-1.5 ${severity.dot}`} aria-hidden="true" />
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 @2xl:flex-col @2xl:gap-0.5">
+            <p className="text-sm font-medium text-ink-800 dark:text-ink-100">{TYPE_LABEL[clash.type] || "Clash"}</p>
+            <p className={`text-xs font-medium ${severity.text}`}>{severity.label}</p>
+          </div>
+        </div>
+        <p className="sr-only">{clash.message}</p>
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 @3xl:grid-cols-2">
+          {clash.items.map((item) => (
+            <ClashItem key={`${item.kind}-${item.id}`} item={item} color={colorFor(item.workspaceId)} />
+          ))}
         </div>
       </div>
-      <p className="sr-only">{clash.message}</p>
-      <div className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 @3xl:grid-cols-2">
-        {clash.items.map((item) => (
-          <ClashItem key={`${item.kind}-${item.id}`} item={item} color={colorFor(item.workspaceId)} />
-        ))}
-      </div>
+
+      {suggestions && (
+        <div className="mt-1 rounded-xl bg-brand-50/60 p-3 text-xs dark:bg-brand-500/[0.06] border border-brand-200/50 dark:border-brand-500/20">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="font-semibold text-brand-800 dark:text-brand-300 flex items-center gap-1.5">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-500" />
+              Actionable Resolution Suggestions
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className="text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline"
+            >
+              {showSuggestions ? "Hide" : "Show suggestions"}
+            </button>
+          </div>
+
+          {showSuggestions && (
+            <div className="space-y-2 mt-2">
+              {suggestions.meetingPriority && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-ink-700 dark:text-ink-200">Meeting Priority:</span>
+                  <p className="text-ink-600 dark:text-ink-300">{suggestions.meetingPriority.reason}</p>
+                </div>
+              )}
+
+              {suggestions.alternativeSlots?.length > 0 && (
+                <div>
+                  <span className="font-medium text-ink-700 dark:text-ink-200">
+                    Suggested Alternative Slots {rescheduleItem ? `(click to reschedule "${rescheduleItem.title}")` : ""}:
+                  </span>
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {suggestions.alternativeSlots.map((slot, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={applying}
+                        onClick={() => handleApplySlot(slot)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300/60 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-brand-700 shadow-soft transition-colors hover:bg-brand-100/70 disabled:opacity-50 dark:border-brand-500/30 dark:bg-ink-800 dark:text-brand-300 dark:hover:bg-ink-700"
+                        title={`${slot.recommendation} — Click to move meeting to this slot`}
+                      >
+                        <span className="font-semibold">{slot.label}:</span>
+                        <span>
+                          {new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                          {" – "}
+                          {new Date(slot.endTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                        </span>
+                        <span className="ml-0.5 rounded bg-brand-500/15 px-1 py-0.2 text-[10px] font-semibold text-brand-800 dark:text-brand-200">
+                          Apply
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {suggestions.recommendedTaskOrder && (
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium text-ink-700 dark:text-ink-200">Recommended Task Priority Order:</span>
+                  <p className="text-ink-600 dark:text-ink-300">{suggestions.recommendedTaskOrder.reason}</p>
+                  {suggestions.recommendedTaskOrder.suggestedReschedule && (
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="text-[11px] text-accent-700 dark:text-accent-300 font-medium">
+                        💡 {suggestions.recommendedTaskOrder.suggestedReschedule.action}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={applying}
+                        onClick={() => handleApplyTaskReschedule(suggestions.recommendedTaskOrder.suggestedReschedule)}
+                        className="rounded-lg border border-accent-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-accent-800 shadow-soft hover:bg-accent-50 disabled:opacity-50 dark:border-accent-500/30 dark:bg-ink-800 dark:text-accent-300"
+                      >
+                        Shift due date (+1d)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {resolutionMsg && (
+                <p role="status" className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  ✓ {resolutionMsg}
+                </p>
+              )}
+              {resolutionErr && (
+                <p role="alert" className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                  {resolutionErr}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </li>
   );
 }

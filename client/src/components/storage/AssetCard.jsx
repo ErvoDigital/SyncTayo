@@ -68,8 +68,19 @@ export default function AssetCard({ asset, canManage, onDropFile, onMergeDrop, o
             : ""
       } ${materializing ? "animate-slide-fade-in" : ""}`}
     >
-      {isMultiVersion && latest && (
-        <span className="absolute right-3 top-3 rounded-full brand-mark px-2 py-0.5 text-[11px] font-semibold text-white shadow-glow-sm">
+      {latest && (
+        <span
+          className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-semibold cursor-help ${
+            isMultiVersion
+              ? "brand-mark text-white shadow-glow-sm"
+              : "border border-ink-200 bg-ink-100/80 text-ink-600 dark:border-white/10 dark:bg-white/10 dark:text-ink-300"
+          }`}
+          title={
+            isMultiVersion
+              ? `Version ${latest.version}: SyncTayo automatically tracks versions. Click "${asset.versionCount} versions" below to preview, download, or restore previous versions.`
+              : `Version 1: Drop a revised file onto this card or upload a file with the same name to automatically create Version 2.`
+          }
+        >
           V{latest.version}
         </span>
       )}
@@ -165,7 +176,7 @@ export default function AssetCard({ asset, canManage, onDropFile, onMergeDrop, o
               <span className="font-medium text-ink-600 dark:text-ink-300">V{v.version}</span>
               <span className="truncate px-2 text-ink-400">{formatSize(v.size)} · {timeAgo(v.createdAt)}</span>
               <div className="flex shrink-0 items-center gap-1">
-                {canManage && onRestoreVersion && v.id !== latest.id && <button type="button" className="px-1 text-[11px] text-brand-600" onClick={() => onRestoreVersion(v)}>Restore</button>}
+                {canManage && onRestoreVersion && v.id !== latest.id && <button type="button" title="Non-destructively promote this version to be the current active file" className="px-1 text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-400" onClick={() => onRestoreVersion(v)}>Restore</button>}
                 <button
                   onClick={() => onPreview(v)}
                   title="Preview"

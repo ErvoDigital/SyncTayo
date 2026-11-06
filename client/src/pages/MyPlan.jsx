@@ -72,6 +72,20 @@ function MyPlanPage({ userId, aiEnabled }) {
   const [accountError, setAccountError] = useState("");
   const [accountSaving, setAccountSaving] = useState(false);
   const [saveRetry, setSaveRetry] = useState(0);
+  const [declutterMode, setDeclutterMode] = useState(false);
+
+  async function handleAddNewTask() {
+    const wsId = plan?.tasks?.[0]?.workspaceId || (plan?.statusesByWorkspace ? Object.keys(plan.statusesByWorkspace)[0] : "");
+    if (!wsId) return;
+    const wsStatuses = plan?.statusesByWorkspace?.[wsId] || [];
+    try {
+      const workspace = await workspacesApi.getWorkspace(wsId);
+      setDetail({ workspaceId: wsId, members: workspace?.members || [], statuses: wsStatuses, task: null });
+    } catch {
+      setDetail({ workspaceId: wsId, members: [], statuses: wsStatuses, task: null });
+    }
+    setEditorOpen(true);
+  }
 
   // Two loads can overlap (e.g. a priority edit's reload racing a socket-driven
   // one) — only the most recently issued response is allowed to land, so a
@@ -249,10 +263,30 @@ function MyPlanPage({ userId, aiEnabled }) {
       <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
         {accountSaving && <p role="status" className="text-xs text-ink-500">Saving personal plan…</p>}
         {accountError && <p role="alert" className="text-sm text-red-600">Your plan is saved on this device, but account sync failed. {accountError} <button className="underline" onClick={() => setSaveRetry((value) => value + 1)}>Retry sync</button></p>}
-        {plan?.preferences && <PlanAvailability key={JSON.stringify([plan.preferences.hoursByWeekday, plan.preferences.accountForMeetings, plan.preferences.timeZone])} preferences={plan.preferences} onSaved={load} />}
+        {!declutterMode && plan?.preferences && <PlanAvailability key={JSON.stringify([plan.preferences.hoursByWeekday, plan.preferences.accountForMeetings, plan.preferences.timeZone])} preferences={plan.preferences} onSaved={load} />}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-ink-900 dark:text-ink-50">My Plan</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-semibold text-ink-900 dark:text-ink-50">My Plan</h2>
+              <button
+                type="button"
+                onClick={handleAddNewTask}
+                className="btn-primary !py-1 !px-2.5 text-xs inline-flex items-center gap-1"
+              >
+                + New task
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeclutterMode(!declutterMode)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors border ${
+                  declutterMode
+                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+                    : "border-ink-200 bg-white text-ink-600 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-300"
+                }`}
+              >
+                {declutterMode ? "Detailed guidance" : "Declutter"}
+              </button>
+            </div>
             <p className="text-sm text-ink-500">Your tasks across workspaces, with Kas’s guidance and room to plan your own way.</p>
             {view !== "calendar" && (
               <div className="mt-2 flex items-center gap-2 text-sm text-ink-600 dark:text-ink-300">
@@ -309,9 +343,9 @@ function MyPlanPage({ userId, aiEnabled }) {
                 <p>{aiEnabled ? "Kas analyzes priorities automatically. Reorder or edit any task below." : "Automatic AI analysis is off. Reorder or edit any task below."}</p>
                 {(preferences.order.length > 0 || Object.keys(preferences.dates).length > 0) && <button type="button" className="min-h-11 text-brand-700 underline dark:text-brand-300" onClick={() => setPreferences(emptyManualPlan())}>Reset personal changes</button>}
               </div>
-              {aiEnabled && <PlanRecommendations analysis={analysis} tasks={plan.tasks} onOpen={openTaskDetail} />}
+              {!declutterMode && aiEnabled && <PlanRecommendations analysis={analysis} tasks={plan.tasks} onOpen={openTaskDetail} />}
             </>}
-            {hasTasks && (
+            {hasTasks && !declutterMode && (
               <PlanFocusHero
                 focus={pickFocus(lanes)}
                 todayHours={todayLane?.hours || 0}

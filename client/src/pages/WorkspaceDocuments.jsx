@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { FileText, Lock, Plus, Search, Settings, Trash2 } from "lucide-react";
+import { Download, FileText, Lock, Plus, Search, Settings, Trash2 } from "lucide-react";
 import * as documentsApi from "../api/documents.js";
 import * as workspacesApi from "../api/workspaces.js";
 import { apiErrorMessage } from "../api/client.js";
@@ -93,6 +93,23 @@ export default function WorkspaceDocuments() {
     }
   }
 
+  async function downloadDoc(e, doc) {
+    e.stopPropagation();
+    try {
+      const blob = await documentsApi.downloadDocument(workspaceId, doc.id, "markdown");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(doc.title || "document").trim().replace(/[^\w\- ]+/g, "") || "document"}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -147,29 +164,39 @@ export default function WorkspaceDocuments() {
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-500 dark:bg-ink-700">
                     <FileText className="h-4 w-4" />
                   </span>
-                  {canManage && (
-                    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-colors focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAccessDoc(doc);
-                        }}
-                        title="Document access"
-                        aria-label="Document access"
-                        className="rounded-lg p-1.5 text-ink-300 touch:p-2 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => deleteDocument(e, doc.id)}
-                        title="Delete document"
-                        aria-label="Delete document"
-                        className="rounded-lg p-1.5 text-ink-300 touch:p-2 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-colors focus-within:opacity-100 group-hover:opacity-100 touch:opacity-100">
+                    <button
+                      onClick={(e) => downloadDoc(e, doc)}
+                      title="Direct download (Markdown)"
+                      aria-label="Download document"
+                      className="rounded-lg p-1.5 text-ink-400 touch:p-2 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </button>
+                    {canManage && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAccessDoc(doc);
+                          }}
+                          title="Document access"
+                          aria-label="Document access"
+                          className="rounded-lg p-1.5 text-ink-300 touch:p-2 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
+                        >
+                          <Settings className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => deleteDocument(e, doc.id)}
+                          title="Delete document"
+                          aria-label="Delete document"
+                          className="rounded-lg p-1.5 text-ink-300 touch:p-2 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <Link to={`/workspaces/${workspaceId}/docs/${doc.id}`} className="min-w-0 rounded-sm outline-offset-4 hover:text-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500">
                   <div className="flex items-center gap-1.5">

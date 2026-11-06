@@ -64,9 +64,11 @@ const MEDIUM = [
 
 // Until a user saves an arrangement, the default follows the screen it's
 // shown on. Once saved, their layout is used at every width.
+// Default hides secondary widgets ("activity" and "files") to reduce visual density,
+// while keeping core summaries and priorities visible and customizable.
 export function defaultLayout(width) {
   const items = width >= WIDE_MIN_WIDTH ? WIDE : MEDIUM;
-  return { items: verticalCompactor.compact(items.map((it) => ({ ...it })), COLS), hidden: [] };
+  return { items: verticalCompactor.compact(items.map((it) => ({ ...it })), COLS), hidden: ["activity", "files"] };
 }
 
 // Per device, like the theme color, and per user, so a shared computer keeps

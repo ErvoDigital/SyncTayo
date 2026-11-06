@@ -8,6 +8,7 @@ router.use(requireAuth, requireWorkspaceMember());
 
 router.get("/", documentsController.listWorkspaceDocuments);
 router.get("/:documentId", documentsController.getWorkspaceDocument);
+router.get("/:documentId/download", documentsController.downloadWorkspaceDocument);
 router.get("/:documentId/revisions", history.listRevisions);
 router.post("/:documentId/revisions", history.createRevision);
 router.get("/:documentId/revisions/:revisionId", history.getRevision);

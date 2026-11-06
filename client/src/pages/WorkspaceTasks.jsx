@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { SlidersHorizontal } from "lucide-react";
+import { Archive, SlidersHorizontal } from "lucide-react";
 import * as tasksApi from "../api/tasks.js";
 import * as workspacesApi from "../api/workspaces.js";
 import * as taskStatusesApi from "../api/taskStatuses.js";
@@ -10,6 +10,7 @@ import TaskCard from "../components/tasks/TaskCard.jsx";
 import TaskModal from "../components/tasks/TaskModal.jsx";
 import TaskDetailsPanel from "../components/tasks/TaskDetailsPanel.jsx";
 import TaskStatusManagerModal from "../components/tasks/TaskStatusManagerModal.jsx";
+import TaskTrashModal from "../components/tasks/TaskTrashModal.jsx";
 import TaskViewToolbar from "../components/tasks/TaskViewToolbar.jsx";
 import TaskListView from "../components/tasks/TaskListView.jsx";
 import TaskTableView, { TASK_TABLE_COLUMNS } from "../components/tasks/TaskTableView.jsx";
@@ -33,6 +34,7 @@ export default function WorkspaceTasks() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [trashModalOpen, setTrashModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsTaskId, setDetailsTaskId] = useState(null);
@@ -197,7 +199,12 @@ export default function WorkspaceTasks() {
   // admin has it) moves anyone's. The server enforces the same rule. Anyone
   // can still reorder a task within the column it's in.
   function canMoveTask(task) {
-    return can(access, "tasks.status") || task.assignee?.id === user.id;
+    return can(access, "tasks.status") || can(access, "tasks.manage") || task.assignee?.id === user.id;
+  }
+
+  function canEditTask(task) {
+    if (!task) return false;
+    return can(access, "tasks.manage") || task.assignee?.id === user.id || task.createdById === user.id || !task.createdById;
   }
 
   function canDropIn(status) {
@@ -268,6 +275,15 @@ export default function WorkspaceTasks() {
         <div className="flex shrink-0 items-center justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-tight text-ink-900 dark:text-ink-50 sm:text-2xl">Tasks</h2>
           <div className="flex items-center gap-2">
+            <button
+              className="btn-secondary max-sm:!px-2.5"
+              onClick={() => setTrashModalOpen(true)}
+              aria-label="Trash and recovery"
+              title="Trash and recovery"
+            >
+              <Archive className="h-4 w-4 sm:hidden" />
+              <span className="hidden sm:inline">Trash</span>
+            </button>
             {canEditStatuses && (
               <button
                 className="btn-secondary max-sm:!px-2.5"
@@ -296,6 +312,52 @@ export default function WorkspaceTasks() {
           {loadError && <button type="button" onClick={load} className="font-semibold underline">Retry</button>}
           {error && <button type="button" onClick={() => setError("")} className="font-semibold underline">Dismiss</button>}
         </div>}
+
+        {columns.length > 0 && (() => {
+          const todoCol = columns.find((c) => /to\s*do/i.test(c.label)) || columns[0];
+          const doneCol = columns.find((c) => c.isDone || /done|complete/i.test(c.label)) || columns[columns.length - 1];
+          const progressCol = columns.find((c) => c.id !== todoCol?.id && c.id !== doneCol?.id && /progress|doing|active|review/i.test(c.label)) || columns.find((c) => c.id !== todoCol?.id && c.id !== doneCol?.id);
+          const summaryCards = [
+            todoCol && { id: todoCol.id, title: "To Do", label: todoCol.label, color: todoCol.color, count: tasks.filter((t) => t.status === todoCol.id).length },
+            progressCol && { id: progressCol.id, title: "In Progress", label: progressCol.label, color: progressCol.color, count: tasks.filter((t) => t.status === progressCol.id).length },
+            doneCol && doneCol.id !== todoCol?.id && { id: doneCol.id, title: "Completed", label: doneCol.label, color: doneCol.color, count: tasks.filter((t) => t.status === doneCol.id).length },
+          ].filter(Boolean);
+
+          return (
+            <div className="grid shrink-0 grid-cols-3 gap-2.5 sm:gap-3" aria-label="Task status summary cards">
+              {summaryCards.map((card) => {
+                const active = filters.status === card.id;
+                const pct = tasks.length > 0 ? Math.round((card.count / tasks.length) * 100) : 0;
+                return (
+                  <div
+                    key={card.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setFilters((prev) => ({ ...prev, status: active ? "all" : card.id }))}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFilters((prev) => ({ ...prev, status: active ? "all" : card.id })); } }}
+                    className={`cursor-pointer rounded-xl border p-2.5 sm:p-3 transition-all ${
+                      active
+                        ? "border-brand-500 bg-brand-50/70 ring-1 ring-brand-400/50 dark:border-brand-400 dark:bg-brand-500/15"
+                        : "border-ink-200/70 bg-white/70 hover:border-brand-300 dark:border-white/10 dark:bg-white/[0.03]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-ink-700 dark:text-ink-200 truncate">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: displayColor(card.color) }} />
+                        {card.title}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums text-ink-900 dark:text-ink-50">{card.count}</span>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-200/60 dark:bg-white/10">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: displayColor(card.color) }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
         <TaskViewToolbar view={view} onViewChange={changeView} filters={filters} onFiltersChange={setFilters} statuses={columns} members={members} total={tasks.length} visible={visibleTasks.length} sort={sort} onSortChange={setSort} groupBy={groupBy} onGroupChange={setGroupBy} />
 
         {!visibleTasks.length && (filtered || view !== "board" || !columns.length) ? <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -386,8 +448,10 @@ export default function WorkspaceTasks() {
         task={detailsTask}
         workspaceId={workspaceId}
         statuses={columns}
+        canEdit={canEditTask(detailsTask)}
         onClose={() => setDetailsOpen(false)}
         onEdit={() => {
+          if (!canEditTask(detailsTask)) return;
           setEditingTask(detailsTask);
           setModalOpen(true);
         }}
@@ -402,6 +466,13 @@ export default function WorkspaceTasks() {
           onChanged={setColumns}
         />
       )}
+
+      <TaskTrashModal
+        open={trashModalOpen}
+        onClose={() => setTrashModalOpen(false)}
+        workspaceId={workspaceId}
+        onRestored={load}
+      />
     </>
   );
 }

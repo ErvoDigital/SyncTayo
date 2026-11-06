@@ -12,6 +12,7 @@ export const PERMISSIONS = [
   "workspace.edit", // name, description, type, color, logo
   "members.manage", // remove members, hear about new joiners
   "tasks.status", // move any task between statuses, not just their own
+  "tasks.manage", // edit, reassign, or delete any task, not just their own
   "statuses.manage", // the task board's columns
   "events.manage", // edit or cancel any calendar event
   "channels.manage", // create channels, delete them for everyone

@@ -43,6 +43,47 @@ export default function TaskViewToolbar({ view, onViewChange, filters, onFilters
         </div>
         {filtered && <button type="button" onClick={() => onFiltersChange({ ...DEFAULT_TASK_FILTERS })} className="btn-ghost !px-2 !py-1 text-xs">Clear filters</button>}
       </div>
+
+      {/* Quick Status / Assignment filter pills for fast navigation */}
+      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        <span className="text-ink-400 font-medium mr-1">Quick view:</span>
+        <button
+          type="button"
+          onClick={() => onFiltersChange({ ...filters, status: "all", assignee: "all" })}
+          className={`rounded-full px-2.5 py-0.5 font-medium transition-colors ${
+            filters.status === "all" && filters.assignee === "all"
+              ? "bg-brand-500 text-white"
+              : "bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
+          }`}
+        >
+          All Cards
+        </button>
+        {statuses.slice(0, 3).map((status) => (
+          <button
+            key={status.id}
+            type="button"
+            onClick={() => onFiltersChange({ ...filters, status: filters.status === status.id ? "all" : status.id })}
+            className={`rounded-full px-2.5 py-0.5 font-medium transition-colors ${
+              filters.status === status.id
+                ? "bg-brand-500 text-white"
+                : "bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
+            }`}
+          >
+            {status.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => onFiltersChange({ ...filters, assignee: filters.assignee === "mine" ? "all" : "mine" })}
+          className={`rounded-full px-2.5 py-0.5 font-medium transition-colors ${
+            filters.assignee === "mine"
+              ? "bg-brand-500 text-white"
+              : "bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
+          }`}
+        >
+          Assigned to me
+        </button>
+      </div>
       {(view === "list" || view === "table") && <div className="flex flex-wrap items-center gap-2 text-xs text-ink-400">
         <span>Sort by</span><Select size="sm" aria-label="Sort tasks by" value={sort.key} onChange={(key) => onSortChange({ key, direction: "asc" })} options={SORT_OPTIONS} />
         <button type="button" onClick={() => onSortChange({ ...sort, direction: sort.direction === "asc" ? "desc" : "asc" })} aria-label={sort.direction === "asc" ? "Sort descending" : "Sort ascending"} className="btn-ghost !px-2 !py-1 text-xs">{sort.direction === "asc" ? "Ascending ↑" : "Descending ↓"}</button>
