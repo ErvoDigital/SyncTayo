@@ -12,6 +12,7 @@ import Avatar from "../components/common/Avatar.jsx";
 import { RoleBadge } from "../components/common/Badges.jsx";
 import Spinner from "../components/common/Spinner.jsx";
 import WorkspaceProfileCard from "../components/workspace/WorkspaceProfileCard.jsx";
+import WorkspacePlanCard from "../components/workspace/WorkspacePlanCard.jsx";
 import MemberAccessModal from "../components/workspace/MemberAccessModal.jsx";
 import InviteMembersModal from "../components/workspace/InviteMembersModal.jsx";
 import { can } from "../lib/access.js";
@@ -171,6 +172,12 @@ export default function WorkspaceSettings() {
         workspace={workspace}
         canEdit={can(workspace, "workspace.edit")}
         onSaved={handleProfileSaved}
+      />
+
+      <WorkspacePlanCard
+        workspace={workspace}
+        currentUser={user}
+        isAdmin={isAdmin}
       />
 
       {/* Members take the wide column; invite and leave stack to their right. */}
