@@ -13,7 +13,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
-import type { PageType, PlanId } from "../types";
+import type { PageType } from "../types";
 
 export const PAGES: {
   id: PageType;
@@ -38,9 +38,9 @@ export const PAGES: {
   {
     id: "pricing",
     label: "Pricing",
-    title: "SyncTayo pricing — Freemium & Team Subscription Plans",
+    title: "SyncTayo — Free During Open Beta",
     description:
-      "Flexible per-team pricing starting at ₱0 / team, with Starter (₱599/team/mo) for growing teams and Pro (₱1,199/team/mo) for larger organizations and SMEs.",
+      "SyncTayo is currently in open beta with all workspace features unlocked at no cost.",
   },
   {
     id: "about",
@@ -48,105 +48,6 @@ export const PAGES: {
     title: "About SyncTayo — Built for life across teams",
     description:
       "SyncTayo helps people coordinate school, work, organizations, and community commitments in one place, with a personal view across independent teams.",
-  },
-];
-
-export const CHECKOUT_PAGE_META = {
-  id: "checkout" as PageType,
-  label: "Subscribe",
-  title: "SyncTayo Checkout — Complete Your Team Subscription",
-  description:
-    "Set up your SyncTayo team subscription and complete checkout with GCash, Maya, Credit/Debit Card, or QR Ph bank transfer.",
-};
-
-export const PRICING_PLANS: {
-  id: PlanId;
-  name: string;
-  badge: string;
-  Icon: typeof Layers;
-  monthlyAmount: number;
-  yearlyAmount: number;
-  monthlyPrice: string;
-  yearlyPrice: string;
-  periodLabel: string;
-  yearlyPeriodLabel?: string;
-  subPriceLabel: string;
-  description: string;
-  ctaLabel: string;
-  popular: boolean;
-  inclusionsHeader: string;
-  inclusions: string[];
-}[] = [
-  {
-    id: "free",
-    name: "Free Plan",
-    badge: "Free Forever",
-    Icon: Layers,
-    monthlyAmount: 0,
-    yearlyAmount: 0,
-    monthlyPrice: "₱0",
-    yearlyPrice: "₱0",
-    periodLabel: "/ team",
-    subPriceLabel: "₱0 / team — Free Forever",
-    description:
-      "Essential workspace tools for everyday team communication, task tracking, and personal daily planning.",
-    ctaLabel: "Start for Free",
-    popular: false,
-    inclusionsHeader: "Inclusions:",
-    inclusions: [
-      "Private team workspace chat and file sharing",
-      "Team task boards and shared calendar view",
-      "Personal daily planner (My Plan) and cross-team priority view",
-      "Standard cloud file storage and basic AI assistant help",
-    ],
-  },
-  {
-    id: "starter",
-    name: "Starter Plan",
-    badge: "Most Popular",
-    Icon: Sparkles,
-    monthlyAmount: 599,
-    yearlyAmount: 5990,
-    monthlyPrice: "₱599",
-    yearlyPrice: "₱5,990",
-    periodLabel: "/ team / month",
-    yearlyPeriodLabel: "/ team / year",
-    subPriceLabel: "₱599 / team / month (or ₱5,990 / year — save 2 months)",
-    description:
-      "Built for growing organizations and active project teams that need shared scheduling, live document collaboration, and file history.",
-    ctaLabel: "Choose Starter",
-    popular: true,
-    inclusionsHeader: "Everything in Free, plus:",
-    inclusions: [
-      "Shared team availability view and 1-click automatic meeting scheduling",
-      "File version history with easy restore and trash recovery for deleted items",
-      "Live collaborative document editing and 1-click document download",
-      "AI-generated meeting summaries and action item suggestions",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    badge: "For Larger Orgs & SMEs",
-    Icon: ShieldCheck,
-    monthlyAmount: 1199,
-    yearlyAmount: 11990,
-    monthlyPrice: "₱1,199",
-    yearlyPrice: "₱11,990",
-    periodLabel: "/ team / month",
-    yearlyPeriodLabel: "/ team / year",
-    subPriceLabel: "₱1,199 / team / month (or ₱11,990 / year — save 2 months)",
-    description:
-      "Full team control, custom member permissions, unlimited AI voice and workload insights, and expanded storage for larger organizations.",
-    ctaLabel: "Upgrade to Pro",
-    popular: false,
-    inclusionsHeader: "Everything in Starter, plus:",
-    inclusions: [
-      "Expanded cloud storage space and faster file handling",
-      "Unlimited AI voice and text assistance with smart task difficulty and workload insights",
-      "Custom member roles and editing permissions for tasks, files, and team access",
-      "Priority multi-team management and dedicated support",
-    ],
   },
 ];
 
@@ -342,14 +243,19 @@ export const FAQS = [
       "SyncTayo is for people who belong to more than one team: students, professionals, project groups, organizations, and community groups. Each team gets its own workspace, while you get a personal view across your memberships.",
   },
   {
-    question: "How does SyncTayo’s freemium pricing work?",
+    question: "What is SyncTayo’s current project status?",
     answer:
-      "SyncTayo offers a Free Plan at ₱0 / team with private workspace chat, file sharing, task boards, My Plan, and basic AI assistance. Teams can upgrade to the Starter Plan (₱599 / team / month or ₱5,990 / year) for shared team availability, 1-click automatic scheduling, file version history with trash recovery, and live collaborative documents, or the Pro Plan (₱1,199 / team / month or ₱11,990 / year) for expanded storage, unlimited AI voice and text assistance with workload insights, and custom member permissions.",
+      "SyncTayo is a student-developed academic project currently in beta testing. The platform is available in open beta for educational and testing purposes.",
+  },
+  {
+    question: "Is SyncTayo free to use?",
+    answer:
+      "Yes. SyncTayo is currently in open beta with all workspace features unlocked at no cost.",
   },
   {
     question: "What does “Try for free” open?",
     answer:
-      "It opens the SyncTayo registration page to create an account and set up your workspace. If you already have an account, use Log in in the navigation bar. SyncTayo verifies sign-in with an emailed code.",
+      "It opens the SyncTayo registration page to create an account and access the open beta. If you already have an account, use Log in in the navigation bar. SyncTayo verifies sign-in with an emailed code.",
   },
   {
     question: "Do my teams see each other’s work?",

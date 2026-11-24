@@ -1,175 +1,122 @@
-import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
-import type { BillingCycle } from "../types";
-import { PRICING_PLANS } from "../data/product";
-import { SectionHeading, StartSection } from "../components/Marketing";
+import { Check, Layers } from "lucide-react";
+import {
+  GetStartedLink,
+  SectionHeading,
+  StartSection,
+} from "../components/Marketing";
+
+const included = [
+  "Shared workspaces and member roles",
+  "Personal dashboard and cross-workspace conflict alerts",
+  "Lofty, our AI assistant (text & voice support)",
+  "Task boards, Smart Priority, and My Plan",
+  "Shared calendars and event reminders",
+  "Workspace channels and direct messages",
+  "Video meetings, screen sharing, and annotations",
+  "Collaborative rich-text documents",
+  "File storage, nested folders, and version history",
+  "In-app notifications and appearance customization",
+  "Folder, document, and member access controls",
+];
 
 export function PricingPage() {
-  const [billing, setBilling] = useState<BillingCycle>("monthly");
-
   return (
     <>
       <section className="container page-hero">
-        <p className="eyebrow">Freemium Subscription Pricing</p>
+        <p className="eyebrow">Open Beta Access</p>
         <h1>
-          Flexible plans for every team.
+          Make space for your teams.
           <br />
-          <span className="text-brand">Start free, scale as you grow.</span>
+          <span className="text-brand">Free during open beta.</span>
         </h1>
         <p className="hero-description">
-          Transparent team-based pricing in Philippine Pesos (₱). Start at ₱0
-          with our Free Plan, or unlock shared scheduling, file version history,
-          live collaborative documents, and full AI assistance for your
-          organization.
+          SyncTayo is currently in open beta with all workspace features, conflict
+          detection, and Lofty, our AI assistant, available at no cost.
         </p>
-
-        <div
-          className="pricing-billing-toggle"
-          role="group"
-          aria-label="Billing cycle toggle"
-        >
-          <button
-            type="button"
-            className={`billing-toggle-btn ${billing === "monthly" ? "active" : ""}`}
-            onClick={() => setBilling("monthly")}
-            aria-pressed={billing === "monthly"}
-          >
-            Monthly Billing
-          </button>
-          <button
-            type="button"
-            className={`billing-toggle-btn ${billing === "yearly" ? "active" : ""}`}
-            onClick={() => setBilling("yearly")}
-            aria-pressed={billing === "yearly"}
-          >
-            Annual Billing
-            <span className="billing-save-pill">2 months free</span>
-          </button>
+      </section>
+      <section className="container pricing-section">
+        <div className="pricing-card">
+          <div className="pricing-intro">
+            <span className="feature-icon">
+              <Layers size={24} aria-hidden="true" />
+            </span>
+            <p className="eyebrow mt-6">Current access</p>
+            <h2>SyncTayo</h2>
+            <p className="price-label">Open Beta</p>
+            <div className="pricing-beta-tag">
+              <span>All features unlocked during open beta</span>
+            </div>
+            <p>
+              Explore all features without cost while SyncTayo is in open beta.
+              Create workspaces, invite your teams, and coordinate your day in
+              one place.
+            </p>
+            <GetStartedLink>Try the open beta</GetStartedLink>
+            <p className="text-sm muted">
+              Already have an account? Sign in and pick up where you left off.
+            </p>
+          </div>
+          <div className="pricing-included">
+            <h3>Included during open beta</h3>
+            <ul>
+              {included.map((item) => (
+                <li key={item}>
+                  <Check size={18} aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="pricing-note">
+              Lofty, our AI assistant, and voice features are available when enabled for
+              your SyncTayo deployment. All beta users receive full access during this preview period.
+            </p>
+          </div>
         </div>
       </section>
-
-      <section className="container pricing-tiers-section">
-        <div className="pricing-tiers-grid">
-          {PRICING_PLANS.map((plan) => {
-            const { Icon } = plan;
-            const isYearly = billing === "yearly" && plan.id !== "free";
-            const displayedPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-            const displayedPeriod =
-              isYearly && plan.yearlyPeriodLabel
-                ? plan.yearlyPeriodLabel
-                : plan.periodLabel;
-            const checkoutHref = `#/checkout?plan=${plan.id}&billing=${billing}`;
-
-            return (
-              <article
-                key={plan.id}
-                className={`pricing-tier-card ${plan.popular ? "popular" : ""}`}
-              >
-                <div className="pricing-tier-header">
-                  <div className="pricing-tier-top">
-                    <span className="feature-icon">
-                      <Icon size={22} aria-hidden="true" />
-                    </span>
-                    <span
-                      className={`pricing-tier-badge ${plan.popular ? "popular" : ""}`}
-                    >
-                      {plan.badge}
-                    </span>
-                  </div>
-
-                  <h2>{plan.name}</h2>
-
-                  <div className="pricing-tier-price">
-                    <span className="price-amount">{displayedPrice}</span>
-                    <span className="price-period">{displayedPeriod}</span>
-                  </div>
-
-                  <p className="pricing-tier-subprice">{plan.subPriceLabel}</p>
-                  <p className="pricing-tier-description">{plan.description}</p>
-
-                  <a
-                    href={checkoutHref}
-                    className={`button ${
-                      plan.popular ? "button-primary" : "button-secondary"
-                    } w-full`}
-                  >
-                    {plan.ctaLabel}
-                    <ArrowRight size={16} aria-hidden="true" />
-                  </a>
-                </div>
-
-                <div className="pricing-tier-inclusions">
-                  <h3>{plan.inclusionsHeader}</h3>
-                  <ul>
-                    {plan.inclusions.map((item) => (
-                      <li key={item}>
-                        <Check size={17} aria-hidden="true" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
       <section className="container section pricing-faq">
         <SectionHeading
-          eyebrow="Freemium & subscription FAQ"
-          title="Clear, predictable team pricing."
+          eyebrow="Open beta details"
+          title="Clear, transparent access."
         />
         <div className="faq-list">
           <details>
             <summary>
-              How does per-team pricing work?<span aria-hidden="true">+</span>
+              What is SyncTayo’s current project status?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              SyncTayo charges per team workspace rather than per individual seat,
-              making it affordable for organizations, project groups, and
-              growing SMEs to invite all their members without per-user surprise
-              costs.
+              SyncTayo is a student-developed academic project currently in beta
+              testing. The platform is available in open beta for educational
+              and testing purposes.
             </p>
           </details>
           <details>
             <summary>
-              What is included in the ₱0 Free Plan?
-              <span aria-hidden="true">+</span>
+              Is SyncTayo free to use?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              The Free Plan is ₱0 / team and includes private team workspace
-              chat, file sharing, team task boards and shared calendar views,
-              your personal daily planner (My Plan), standard cloud file
-              storage, and basic AI assistant help.
+              Yes! SyncTayo is currently in open beta. You can explore all
+              features — including multi-workspace collaboration and Lofty,
+              our AI assistant — completely free of charge.
             </p>
           </details>
           <details>
             <summary>
-              What is the difference between Starter and Pro?
-              <span aria-hidden="true">+</span>
+              How do I create an account?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              Starter (₱599 / team / month or ₱5,990 / year) is designed for
-              organizations and active project teams needing shared team
-              availability, 1-click automatic meeting scheduling, file version
-              history with trash recovery, live collaborative documents, and AI
-              meeting summaries. Pro (₱1,199 / team / month or ₱11,990 / year)
-              adds expanded cloud storage space, unlimited AI voice and text
-              assistance with task difficulty and workload insights, and custom
-              member roles and editing permissions.
+              Choose “Try the open beta” to open the SyncTayo registration page and
+              create your account. You can sign in with a password or Google and
+              complete email verification.
             </p>
           </details>
           <details>
             <summary>
-              Can we switch between monthly and yearly billing?
-              <span aria-hidden="true">+</span>
+              Can I create or join a team?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              Yes. Teams can start on monthly billing (₱599/mo for Starter or
-              ₱1,199/mo for Pro) and switch to annual billing (₱5,990/yr for
-              Starter or ₱11,990/yr for Pro) at any time to save the equivalent
-              of two months per year.
+              Yes. Once signed in, create a workspace and invite your people, or
+              join a workspace you’ve been invited to. Your dashboard brings
+              work from your memberships into one personal view.
             </p>
           </details>
         </div>

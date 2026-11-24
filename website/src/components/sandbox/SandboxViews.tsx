@@ -1540,43 +1540,6 @@ function SettingsView({ workspaceId }: ViewProps) {
           </p>
         )}
       </Card>
-      {workspace && (
-        <Card title="Upgrade Workspace Plan">
-          <div className="ls-member-row">
-            <span>
-              <strong>Free Plan (Current)</strong>
-              <small>₱0 / team · Private chat, team task boards & My Plan</small>
-            </span>
-            <span className="ls-access-badge">Active</span>
-          </div>
-          <div className="ls-member-row">
-            <span>
-              <strong>Starter Plan · Most Popular</strong>
-              <small>
-                ₱599 / team / mo (or ₱5,990 / yr) · Shared team availability,
-                file version history, live collaborative documents & AI
-                summaries
-              </small>
-            </span>
-            <a className="ls-access-badge" href="#/checkout?plan=starter&billing=monthly">
-              Upgrade →
-            </a>
-          </div>
-          <div className="ls-member-row">
-            <span>
-              <strong>Pro Plan · Larger Orgs & SMEs</strong>
-              <small>
-                ₱1,199 / team / mo (or ₱11,990 / yr) · Expanded cloud storage,
-                unlimited AI voice & workload insights, and custom member
-                permissions
-              </small>
-            </span>
-            <a className="ls-access-badge" href="#/checkout?plan=pro&billing=monthly">
-              Upgrade →
-            </a>
-          </div>
-        </Card>
-      )}
       <Card title={workspace ? "Members" : "Sample account"}>
         {(workspace ? MEMBERS : MEMBERS.slice(0, 1)).map((member) => (
           <div className="ls-member-row" key={member.id}>

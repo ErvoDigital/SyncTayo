@@ -18,8 +18,8 @@ export function Footer() {
           <nav aria-label="Product links">
             <h2>Product</h2>
             <a href="#/features">Explore features</a>
-            <a href="#/pricing">Plans & Pricing</a>
-            <a href={REGISTER_URL}>Start for free</a>
+            <a href="#/pricing">Open Beta</a>
+            <a href={REGISTER_URL}>Try open beta</a>
           </nav>
           <nav aria-label="About links">
             <h2>SyncTayo</h2>
@@ -27,6 +27,11 @@ export function Footer() {
             <a href="#/features">Workspaces & collaboration</a>
             <a href={REGISTER_URL}>Create your account</a>
           </nav>
+        </div>
+        <div className="footer-notice">
+          <p>
+            <strong>Academic Project Notice:</strong> SyncTayo is a student-developed academic project currently in beta testing. The platform is available in open beta for educational and testing purposes.
+          </p>
         </div>
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} SyncTayo. All rights reserved.</p>

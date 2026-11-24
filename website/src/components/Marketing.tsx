@@ -10,6 +10,7 @@ export function Brand() {
         S
       </span>
       <span>SyncTayo</span>
+      <span className="beta-badge">Beta</span>
     </span>
   );
 }
@@ -83,12 +84,12 @@ export function StartSection() {
           <p className="eyebrow">Make room for what matters</p>
           <h2>Bring your teams into SyncTayo.</h2>
           <p>
-            Start with our Free Plan at ₱0 / team, or unlock Starter and Pro
-            team plans as your organization grows.
+            Experience the open beta today with all workspace features and
+            Lofty, our AI assistant, available at no cost.
           </p>
         </div>
         <GetStartedLink className="shrink-0">
-          Start for free
+          Try the open beta
         </GetStartedLink>
       </div>
     </section>

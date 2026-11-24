@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react";
 import type { PageType } from "./types";
-import { CHECKOUT_PAGE_META, PAGES } from "./data/product";
+import { PAGES } from "./data/product";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
 import { FeaturesPage } from "./pages/FeaturesPage";
 import { PricingPage } from "./pages/PricingPage";
 import { AboutPage } from "./pages/AboutPage";
-import { CheckoutPage } from "./pages/CheckoutPage";
 
 function pageFromLocation(): PageType {
-  const rawHash = window.location.hash.replace(/^#\/?/, "");
-  const route = rawHash.split("?")[0].replace(/\/$/, "");
-  if (route === "checkout" || route === "subscribe") {
-    return "checkout";
-  }
+  const route = window.location.hash.replace(/^#\/?/, "").replace(/\/$/, "");
   return PAGES.find((page) => page.id === route)?.id || "home";
 }
 
@@ -31,10 +26,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const page =
-      currentPage === "checkout"
-        ? CHECKOUT_PAGE_META
-        : PAGES.find((item) => item.id === currentPage)!;
+    const page = PAGES.find((page) => page.id === currentPage)!;
     document.title = page.title;
     for (const selector of [
       'meta[name="description"]',
@@ -67,7 +59,6 @@ export default function App() {
         {currentPage === "features" && <FeaturesPage />}
         {currentPage === "pricing" && <PricingPage />}
         {currentPage === "about" && <AboutPage />}
-        {currentPage === "checkout" && <CheckoutPage />}
       </main>
       <Footer />
     </div>
